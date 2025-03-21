@@ -21,6 +21,7 @@ export default function PrefForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [todoList, setTodoList] = useState<any>(null); // structured object or raw string
+  const [loading, setLoading] = useState<boolean>(false); // 👈 loading state
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -28,6 +29,10 @@ export default function PrefForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true); // 👈 show loading
+    setSubmitSuccess(null);
+    setSubmitError(null);
+    setTodoList(null);
 
     try {
       const jsonBlob = new Blob([JSON.stringify(formData, null, 2)], {
@@ -45,6 +50,8 @@ export default function PrefForm() {
       setSubmitError(error.response?.data?.error || "Upload failed.");
       setSubmitSuccess(null);
       setTodoList(null);
+    } finally {
+      setLoading(false); // 👈 hide loading
     }
   };
 
@@ -75,8 +82,6 @@ export default function PrefForm() {
             />
           </div>
 
-          {/* (Rest of form questions — unchanged) */}
-          {/* Question 1 */}
           <div className={styles.formGroup}>
             <label>1. What's the vibe of your perfect wedding?</label>
             <select value={formData.vibe} onChange={(e) => handleChange("vibe", e.target.value)}>
@@ -93,9 +98,9 @@ export default function PrefForm() {
           {/* Repeat for remaining questions (2–10) */}
           {/* ... (no changes to those fields) */}
 
-          {/* Submit */}
           <button type="submit" className={styles.uploadButton}>Submit</button>
 
+          {loading && <p className={styles.loading}>Generating your to-do list...</p>} {/* 👈 loading text */}
           {submitSuccess && <p className={styles.successMessage}>{submitSuccess}</p>}
           {submitError && <p className={styles.errorMessage}>{submitError}</p>}
         </form>

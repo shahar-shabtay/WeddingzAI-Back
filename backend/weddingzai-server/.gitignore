@@ -11,10 +11,6 @@ pids
 *.pid
 *.seed
 
-# Directory for local data
-/.env
-#.env.*
-
 # Optional npm cache directory
 .npm
 
