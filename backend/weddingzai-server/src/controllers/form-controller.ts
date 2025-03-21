@@ -9,33 +9,52 @@ const genAI = new GoogleGenerativeAI(apiKey);
 const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 const generateTodoList = async (preferences: any) => {
-  const prompt = `
-You are an expert wedding planner. Based on the couple's wedding preferences, generate a detailed wedding to-do list.
-Here are the preferences:
-${JSON.stringify(preferences, null, 2)}
+    const currentDate = new Date().toISOString().split("T")[0];
 
-Now, create a detailed wedding to-do list tailored to these preferences. Return only the to-do list as a JSON object, with this exact format:
+    const prompt = `
+    You are an expert wedding planner. Based on the couple's wedding preferences, generate a detailed wedding to-do list.
+    Here are the preferences:
+    ${JSON.stringify(preferences, null, 2)}
 
-{
-  "weddingTodoListName": string,
-  "bride": string,
-  "groom": string,
-  "sections": [
+    Important Notes:
+    - The current date is **${currentDate}**.
+    - The **wedding date** is provided in the preferences.
+    - If the wedding is **far in the future (e.g., 1 year from now)**, spread out tasks over months to allow for gradual planning.
+    - If the wedding is **soon (e.g., in a few weeks)**, prioritize urgent tasks and streamline the planning process.
+    - The **estimated budget** should impact vendor recommendations, venue options, and overall planning decisions.
+    - Tasks must have realistic **due dates** based on the time remaining until the wedding.
+    - Phases should reflect the urgency of the tasks and consider the wedding's timeframe.
+
+    Return only the to-do list as a JSON object, using this exact format:
+
     {
-      "sectionName": string,
-      "todos": [
+    "weddingTodoListName": string,
+    "bride": string,
+    "groom": string,
+    "weddingDate": string,
+    "estimatedBudget": string,
+    "sections": [
         {
-          "task": string,
-          "dueDate": string,
-          "priority": string
+        "sectionName": string,
+        "todos": [
+            {
+            "task": string,
+            "dueDate": string,
+            "priority": string
+            }
+        ]
         }
-      ]
+    ]
     }
-  ]
-}
 
-Do NOT include any explanations or Markdown code blocks. Respond with raw JSON only.
-`;
+    Additional Guidelines:
+    - Calculate **task due dates** based on the time remaining until the wedding.
+    - For **urgent weddings (less than 2 months away)**, compress planning phases and focus on essential tasks.
+    - For **long-term weddings (6+ months away)**, spread tasks evenly across months.
+    - Ensure a logical progression from early planning to wedding day execution.
+    - Do NOT include any explanations or Markdown code blocks. Respond with raw JSON only.
+    `;
+    
 
   try {
     const result = await model.generateContent(prompt);

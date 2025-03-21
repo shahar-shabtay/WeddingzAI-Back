@@ -7,10 +7,11 @@ export default function PrefForm() {
   const [formData, setFormData] = useState({
     bride: "",
     groom: "",
+    weddingDate: "", 
     vibe: "",
     guestCount: "",
     location: "",
-    budget: "",
+    estimatedBudget: "", 
     importantPart: "",
     ceremonyType: "",
     guestExperience: "",
@@ -68,6 +69,18 @@ export default function PrefForm() {
             <input type="text" value={formData.groom} onChange={(e) => handleChange("groom", e.target.value)} placeholder="Enter groom's name" />
           </div>
 
+          {/* New Wedding Date Input */}
+          <div className={styles.formGroup}>
+            <label>Wedding Date</label>
+            <input type="date" value={formData.weddingDate} onChange={(e) => handleChange("weddingDate", e.target.value)} />
+          </div>
+
+          {/* New Estimated Budget Input */}
+          <div className={styles.formGroup}>
+            <label>Estimated Budget (ILS)</label>
+            <input type="number" min="0" value={formData.estimatedBudget} onChange={(e) => handleChange("estimatedBudget", e.target.value)} placeholder="Enter estimated budget" />
+          </div>
+
           {/* Question 1 */}
           <div className={styles.formGroup}>
             <label>1. What's the vibe of your perfect wedding?</label>
@@ -111,21 +124,7 @@ export default function PrefForm() {
 
           {/* Question 4 */}
           <div className={styles.formGroup}>
-            <label>4. What's your overall wedding budget range? (in ILS)</label>
-            <select value={formData.budget} onChange={(e) => handleChange("budget", e.target.value)}>
-              <option value="">Select</option>
-              <option>Under ₪10,000</option>
-              <option>₪10,000 – ₪30,000</option>
-              <option>₪30,000 – ₪60,000</option>
-              <option>₪60,000 – ₪100,000</option>
-              <option>₪100,000+</option>
-              <option>Not sure yet</option>
-            </select>
-          </div>
-
-          {/* Question 5 */}
-          <div className={styles.formGroup}>
-            <label>5. Which part of the wedding is most important to you?</label>
+            <label>4. Which part of the wedding is most important to you?</label>
             <select value={formData.importantPart} onChange={(e) => handleChange("importantPart", e.target.value)}>
               <option value="">Select</option>
               <option>The ceremony</option>
@@ -137,9 +136,9 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Question 6 */}
+          {/* Question 5 */}
           <div className={styles.formGroup}>
-            <label>6. What type of ceremony are you envisioning?</label>
+            <label>5. What type of ceremony are you envisioning?</label>
             <select value={formData.ceremonyType} onChange={(e) => handleChange("ceremonyType", e.target.value)}>
               <option value="">Select</option>
               <option>Religious/traditional</option>
@@ -147,31 +146,6 @@ export default function PrefForm() {
               <option>Spiritual but not religious</option>
               <option>Cultural/family-oriented</option>
               <option>Not sure yet</option>
-            </select>
-          </div>
-
-          {/* Question 7 */}
-          <div className={styles.formGroup}>
-            <label>7. What kind of experience do you want your guests to have?</label>
-            <select value={formData.guestExperience} onChange={(e) => handleChange("guestExperience", e.target.value)}>
-              <option value="">Select</option>
-              <option>Relaxed and casual</option>
-              <option>Elegant and formal</option>
-              <option>Fun and energetic</option>
-              <option>Intimate and emotional</option>
-              <option>A mix of everything</option>
-            </select>
-          </div>
-
-          {/* Question 8 */}
-          <div className={styles.formGroup}>
-            <label>8. How much time do you want to spend planning your wedding?</label>
-            <select value={formData.planningTime} onChange={(e) => handleChange("planningTime", e.target.value)}>
-              <option value="">Select</option>
-              <option>A few weeks</option>
-              <option>A few months</option>
-              <option>A full year</option>
-              <option>As long as it takes</option>
             </select>
           </div>
 

@@ -1,6 +1,4 @@
-import React from "react";
-import { Routes, Route, Router, BrowserRouter } from "react-router-dom";
-// import JsonUploadPage from "./pages/JsonUploaderPage";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
 import PrefFormPage from "./pages/PrefFormPage";
 import TodoListPage from "./pages/TodoListPage";
 
