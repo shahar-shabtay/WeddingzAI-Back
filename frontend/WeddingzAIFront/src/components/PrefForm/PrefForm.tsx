@@ -82,21 +82,6 @@ export default function PrefForm() {
             />
           </div>
 
-          <div className={styles.formGroup}>
-            <label>1. What's the vibe of your perfect wedding?</label>
-            <select value={formData.vibe} onChange={(e) => handleChange("vibe", e.target.value)}>
-              <option value="">Select</option>
-              <option>Intimate & cozy</option>
-              <option>Classic & elegant</option>
-              <option>Fun & colorful</option>
-              <option>Glamorous & luxe</option>
-              <option>Rustic & outdoorsy</option>
-              <option>I’m not sure yet</option>
-            </select>
-          </div>
-
-          {/* Add remaining form questions here in similar style... */}
-
           <button type="submit" className={styles.uploadButton}>Submit</button>
 
           {loading && <p className={styles.loading}>Generating your to-do list...</p>}
@@ -106,30 +91,33 @@ export default function PrefForm() {
 
         {todoList && (
           <div className={styles.todoListContainer}>
-            <h3>{todoList.weddingTodoListName}</h3>
+            <h2 className={styles.todoTitle}>{todoList.weddingTodoListName}</h2>
             <p className={styles.coupleNames}>👰 {todoList.bride} & 🤵 {todoList.groom}</p>
 
             {Array.isArray(todoList.sections) && todoList.sections.length > 0 ? (
               todoList.sections.map((section: any, index: number) => (
                 <div key={index} className={styles.todoSection}>
-                  <h4>{section.sectionName}</h4>
+                  <h3 className={styles.sectionTitle}>{section.sectionName}</h3>
                   <ul className={styles.todoList}>
                     {section.todos.map((todo: any, i: number) => (
                       <li key={i} className={styles.todoItem}>
-                        <div className={styles.taskHeader}>
-                          <strong>{todo.task}</strong>
-                          <span className={`${styles.priority} ${styles[`priority${todo.priority}`]}`}>
-                            {todo.priority}
-                          </span>
+                        <div className={styles.taskRow}>
+                          <input type="checkbox" className={styles.checkbox} />
+                          <div className={styles.taskInfo}>
+                            <strong className={styles.taskTitle}>{todo.task}</strong>
+                            <span className={`${styles.priority} ${styles[`priority${todo.priority}`]}`}>
+                              {todo.priority}
+                            </span>
+                          </div>
+                          <span className={styles.dueDate}>📅 {todo.dueDate}</span>
                         </div>
-                        <p className={styles.dueDate}>📅 {todo.dueDate}</p>
                       </li>
                     ))}
                   </ul>
                 </div>
               ))
             ) : (
-              <p>No tasks found.</p>
+              <p className={styles.noTasks}>No tasks found.</p>
             )}
           </div>
         )}
