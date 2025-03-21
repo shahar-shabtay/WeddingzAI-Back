@@ -1,108 +1,106 @@
+/* TodoList.module.css */
+
 .wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    margin-top: 20px;
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: #f9f9f9;
   }
   
   .todoListContainer {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     max-width: 800px;
     width: 100%;
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   .todoTitle {
-    font-size: 1.8rem;
-    font-weight: bold;
     text-align: center;
+    font-size: 2rem;
     margin-bottom: 0.5rem;
   }
   
-  .coupleNames {
-    font-weight: bold;
+  .coupleNames,
+  .weddingDate {
     text-align: center;
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
+    margin: 0.25rem 0;
+    font-size: 1.1rem;
+    color: #666;
   }
   
   .todoSection {
-    margin-bottom: 2rem;
+    margin-top: 2rem;
   }
   
   .sectionTitle {
-    font-size: 1.4rem;
-    font-weight: bold;
-    border-bottom: 2px solid #ddd;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
   }
   
   .todoList {
     list-style: none;
-    padding-left: 0;
+    padding: 0;
+    margin: 0;
   }
   
   .todoItem {
-    padding: 1rem;
-    border-radius: 8px;
-    background: #f8f8f8;
     margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
   }
   
   .taskRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
+    gap: 1rem;
+    background: #f4f4f4;
+    padding: 0.75rem;
+    border-radius: 8px;
   }
   
   .taskInfo {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-grow: 1;
   }
   
   .taskTitle {
-    font-size: 1rem;
-    font-weight: bold;
+    font-weight: 600;
+  }
+  
+  .priority {
+    font-size: 0.9rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-left: 0.5rem;
+  }
+  
+  .priorityHigh {
+    background-color: #ffcccc;
+    color: #a70000;
+  }
+  
+  .priorityMedium {
+    background-color: #fff4cc;
+    color: #8a6d00;
+  }
+  
+  .priorityLow {
+    background-color: #d0f0c0;
+    color: #007a00;
   }
   
   .dueDate {
     font-size: 0.9rem;
-    color: #555;
+    white-space: nowrap;
+    color: #444;
   }
   
-  .checkbox {
-    width: 18px;
-    height: 18px;
-    margin-right: 10px;
-  }
-  
-  .priority {
-    padding: 0.3rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: white;
-    text-transform: uppercase;
-  }
-  
-  .priorityHigh {
-    background-color: #e53935;
-  }
-  
-  .priorityMedium {
-    background-color: #fbc02d;
-    color: black;
-  }
-  
-  .priorityLow {
-    background-color: #43a047;
+  .loading,
+  .noTasks {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #888;
   }
   
