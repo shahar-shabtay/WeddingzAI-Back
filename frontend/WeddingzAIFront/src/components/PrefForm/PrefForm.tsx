@@ -20,8 +20,8 @@ export default function PrefForm() {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
-  const [todoList, setTodoList] = useState<any>(null); // structured object or raw string
-  const [loading, setLoading] = useState<boolean>(false); // 👈 loading state
+  const [todoList, setTodoList] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -29,7 +29,7 @@ export default function PrefForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); // 👈 show loading
+    setLoading(true);
     setSubmitSuccess(null);
     setSubmitError(null);
     setTodoList(null);
@@ -45,13 +45,13 @@ export default function PrefForm() {
       const response = await formService.uploadFormJson(jsonFile);
       setSubmitSuccess(response.data.message);
       setSubmitError(null);
-      setTodoList(response.data.todoList); // 👈 Save the to-do list from backend
+      setTodoList(response.data.todoList);
     } catch (error: any) {
       setSubmitError(error.response?.data?.error || "Upload failed.");
       setSubmitSuccess(null);
       setTodoList(null);
     } finally {
-      setLoading(false); // 👈 hide loading
+      setLoading(false);
     }
   };
 
@@ -95,35 +95,41 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Repeat for remaining questions (2–10) */}
-          {/* ... (no changes to those fields) */}
+          {/* Add remaining form questions here in similar style... */}
 
           <button type="submit" className={styles.uploadButton}>Submit</button>
 
-          {loading && <p className={styles.loading}>Generating your to-do list...</p>} {/* 👈 loading text */}
+          {loading && <p className={styles.loading}>Generating your to-do list...</p>}
           {submitSuccess && <p className={styles.successMessage}>{submitSuccess}</p>}
           {submitError && <p className={styles.errorMessage}>{submitError}</p>}
         </form>
 
-        {/* To-do List Output */}
         {todoList && (
           <div className={styles.todoListContainer}>
-            <h3>Your Wedding To-Do List 🎯</h3>
-            {typeof todoList === "string" ? (
-              <pre className={styles.todoListRaw}>{todoList}</pre>
+            <h3>{todoList.weddingTodoListName}</h3>
+            <p className={styles.coupleNames}>👰 {todoList.bride} & 🤵 {todoList.groom}</p>
+
+            {Array.isArray(todoList.sections) && todoList.sections.length > 0 ? (
+              todoList.sections.map((section: any, index: number) => (
+                <div key={index} className={styles.todoSection}>
+                  <h4>{section.sectionName}</h4>
+                  <ul className={styles.todoList}>
+                    {section.todos.map((todo: any, i: number) => (
+                      <li key={i} className={styles.todoItem}>
+                        <div className={styles.taskHeader}>
+                          <strong>{todo.task}</strong>
+                          <span className={`${styles.priority} ${styles[`priority${todo.priority}`]}`}>
+                            {todo.priority}
+                          </span>
+                        </div>
+                        <p className={styles.dueDate}>📅 {todo.dueDate}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))
             ) : (
-              <ul>
-                {Object.entries(todoList as Record<string, string[]>).map(([section, tasks]) => (
-                  <li key={section}>
-                    <strong>{section}</strong>
-                    <ul>
-                      {tasks.map((task, i) => (
-                        <li key={i}>{task}</li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
+              <p>No tasks found.</p>
             )}
           </div>
         )}
