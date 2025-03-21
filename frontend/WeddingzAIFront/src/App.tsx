@@ -1,17 +1,16 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import JsonUploadPage from "./pages/JsonUploaderPage";
+import { Routes, Route, Router, BrowserRouter } from "react-router-dom";
+// import JsonUploadPage from "./pages/JsonUploaderPage";
 import PrefFormPage from "./pages/PrefFormPage";
+import TodoListPage from "./pages/TodoListPage";
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/upload-json" element={<JsonUploadPage />} />
-        <Route path="/pref-form" element={<PrefFormPage />} />
+        <Route path="/" element={<PrefFormPage />} />
+        <Route path="/todolist" element={<TodoListPage />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;
