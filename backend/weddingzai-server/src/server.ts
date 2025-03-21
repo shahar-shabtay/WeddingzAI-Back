@@ -1,7 +1,6 @@
 import express, { Application, Request, Response } from "express";
 
 import cors from "cors";
-import uploadRoutes from "./routes/upload-routes";
 import formUploadRoutes from "./routes/form-routes";
 
 const app: Application = express();
@@ -12,7 +11,6 @@ app.use(express.json());
 
 const apiBase = "/api";
 
-app.use(apiBase, uploadRoutes);
 app.use(apiBase, formUploadRoutes);
 
 // Add GET / route for project owners
