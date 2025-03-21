@@ -1,10 +1,14 @@
-import JsonUploader from "./components/JsonUploader/JsonUploader";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import JsonUploadPage from "./pages/JsonUploaderPage";
 
 function App() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <JsonUploader />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/upload-json" element={<JsonUploadPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
