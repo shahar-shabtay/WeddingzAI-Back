@@ -3,15 +3,31 @@ import { useNavigate } from "react-router-dom";
 import styles from "./PrefForm.module.css";
 import formService from "../../services/form-service";
 
+interface FormData {
+  bride: string;
+  groom: string;
+  weddingDate: string;
+  vibe: string;
+  guestCount: string;
+  location: string;
+  estimatedBudget: string;
+  importantPart: string;
+  ceremonyType: string;
+  guestExperience: string;
+  planningTime: string;
+  foodStyle: string;
+  mustHave: string;
+}
+
 export default function PrefForm() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     bride: "",
     groom: "",
-    weddingDate: "", 
+    weddingDate: "",
     vibe: "",
     guestCount: "",
     location: "",
-    estimatedBudget: "", 
+    estimatedBudget: "",
     importantPart: "",
     ceremonyType: "",
     guestExperience: "",
@@ -22,13 +38,13 @@ export default function PrefForm() {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate(); // Hook for redirection
+  const navigate = useNavigate();
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setSubmitError(null);
@@ -42,10 +58,15 @@ export default function PrefForm() {
       });
 
       const response = await formService.uploadFormJson(jsonFile);
-      localStorage.setItem("todoList", JSON.stringify(response.data.todoList)); // Store to-do list in localStorage
-      navigate("/todolist"); // Redirect to to-do list page
-    } catch (error: any) {
-      setSubmitError(error.response?.data?.error || "Upload failed.");
+      localStorage.setItem("todoList", JSON.stringify(response.data.todoList));
+      navigate("/todolist");
+    } catch (error: unknown) {
+      if (typeof error === "object" && error !== null && "response" in error) {
+        const err = error as { response?: { data?: { error?: string } } };
+        setSubmitError(err.response?.data?.error || "Upload failed.");
+      } else {
+        setSubmitError("Upload failed.");
+      }
     } finally {
       setLoading(false);
     }
@@ -58,30 +79,46 @@ export default function PrefForm() {
         <p>Please answer the following questions to help us create your personalized wedding to-do list.</p>
 
         <form onSubmit={handleSubmit}>
-          {/* Bride & Groom Names */}
           <div className={styles.formGroup}>
             <label>Bride's Name</label>
-            <input type="text" value={formData.bride} onChange={(e) => handleChange("bride", e.target.value)} placeholder="Enter bride's name" />
+            <input
+              type="text"
+              value={formData.bride}
+              onChange={(e) => handleChange("bride", e.target.value)}
+              placeholder="Enter bride's name"
+            />
           </div>
 
           <div className={styles.formGroup}>
             <label>Groom's Name</label>
-            <input type="text" value={formData.groom} onChange={(e) => handleChange("groom", e.target.value)} placeholder="Enter groom's name" />
+            <input
+              type="text"
+              value={formData.groom}
+              onChange={(e) => handleChange("groom", e.target.value)}
+              placeholder="Enter groom's name"
+            />
           </div>
 
-          {/* New Wedding Date Input */}
           <div className={styles.formGroup}>
             <label>Wedding Date</label>
-            <input type="date" value={formData.weddingDate} onChange={(e) => handleChange("weddingDate", e.target.value)} />
+            <input
+              type="date"
+              value={formData.weddingDate}
+              onChange={(e) => handleChange("weddingDate", e.target.value)}
+            />
           </div>
 
-          {/* New Estimated Budget Input */}
           <div className={styles.formGroup}>
             <label>Estimated Budget (ILS)</label>
-            <input type="number" min="0" value={formData.estimatedBudget} onChange={(e) => handleChange("estimatedBudget", e.target.value)} placeholder="Enter estimated budget" />
+            <input
+              type="number"
+              min="0"
+              value={formData.estimatedBudget}
+              onChange={(e) => handleChange("estimatedBudget", e.target.value)}
+              placeholder="Enter estimated budget"
+            />
           </div>
 
-          {/* Question 1 */}
           <div className={styles.formGroup}>
             <label>1. What's the vibe of your perfect wedding?</label>
             <select value={formData.vibe} onChange={(e) => handleChange("vibe", e.target.value)}>
@@ -95,7 +132,6 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Question 2 */}
           <div className={styles.formGroup}>
             <label>2. How big do you want your celebration to be?</label>
             <select value={formData.guestCount} onChange={(e) => handleChange("guestCount", e.target.value)}>
@@ -108,7 +144,6 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Question 3 */}
           <div className={styles.formGroup}>
             <label>3. What's your ideal wedding location?</label>
             <select value={formData.location} onChange={(e) => handleChange("location", e.target.value)}>
@@ -122,7 +157,6 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Question 4 */}
           <div className={styles.formGroup}>
             <label>4. Which part of the wedding is most important to you?</label>
             <select value={formData.importantPart} onChange={(e) => handleChange("importantPart", e.target.value)}>
@@ -136,7 +170,6 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Question 5 */}
           <div className={styles.formGroup}>
             <label>5. What type of ceremony are you envisioning?</label>
             <select value={formData.ceremonyType} onChange={(e) => handleChange("ceremonyType", e.target.value)}>
@@ -149,7 +182,6 @@ export default function PrefForm() {
             </select>
           </div>
 
-          {/* Submit Button */}
           <button type="submit" className={styles.uploadButton}>Submit</button>
 
           {loading && <p className={styles.loading}>Generating your to-do list...</p>}
