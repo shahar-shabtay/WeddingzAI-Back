@@ -1,0 +1,24 @@
+{
+    "couple": {
+        "bride": "Emma Johnson",
+        "groom": "Liam Smith"
+    },
+    "preferences": {
+        "guestCount": 150,
+        "entertainment": "DJ",
+        "weddingType": "Traditional",
+        "venueType": "Outdoor",
+        "budget": 20000,
+        "cateringStyle": "Buffet",
+        "colorScheme": "Blue and White",
+        "floralTheme": "Roses and Lilies",
+        "weddingDressStyle": "A-line",
+        "groomSuitStyle": "Classic Tuxedo",
+        "ceremonyType": "Religious",
+        "photographyStyle": "Candid and Classic",
+        "transportation": "Luxury Car",
+        "honeymoonDestination": "Maldives",
+        "weddingFavors": "Personalized Chocolates",
+        "cakeFlavor": "Vanilla with Raspberry Filling"
+    
+}
