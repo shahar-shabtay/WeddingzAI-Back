@@ -1,23 +1,29 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import styles from "./PrefForm.module.css";
 import formService from "../../services/form-service";
 
-interface FormData {
-  bride: string;
-  groom: string;
-  weddingDate: string;
-  vibe: string;
-  guestCount: string;
-  location: string;
-  estimatedBudget: string;
-  importantPart: string;
-  ceremonyType: string;
-  guestExperience: string;
-  planningTime: string;
-  foodStyle: string;
-  mustHave: string;
-}
+console.log(styles.fieldError);
+
+// Define the Zod schema
+const formSchema = z.object({
+  bride: z.string().min(1, "Bride's name is required"),
+  groom: z.string().min(1, "Groom's name is required"),
+  weddingDate: z.string().min(1, "Wedding date is required"),
+  estimatedBudget: z.string().min(1, "Estimated budget is required"),
+  vibe: z.string().min(1, "Please select a wedding vibe"),
+  guestCount: z.string().min(1, "Please select a guest count"),
+  location: z.string().min(1, "Please select a location"),
+  importantPart: z.string().min(1, "Please select an important part"),
+  ceremonyType: z.string().min(1, "Please select a ceremony type"),
+  guestExperience: z.string().optional(),
+  planningTime: z.string().optional(),
+  foodStyle: z.string().optional(),
+  mustHave: z.string().optional(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 export default function PrefForm() {
   const [formData, setFormData] = useState<FormData>({
@@ -36,18 +42,33 @@ export default function PrefForm() {
     mustHave: "",
   });
 
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormErrors((prev) => ({ ...prev, [field]: "" })); // Clear error when user types
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setSubmitError(null);
+
+    const validation = formSchema.safeParse(formData);
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        fieldErrors[field] = err.message;
+      });
+      setFormErrors(fieldErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
       const jsonBlob = new Blob([JSON.stringify(formData, null, 2)], {
@@ -79,111 +100,67 @@ export default function PrefForm() {
         <p>Please answer the following questions to help us create your personalized wedding to-do list.</p>
 
         <form onSubmit={handleSubmit}>
-          <div className={styles.formGroup}>
-            <label>Bride's Name</label>
-            <input
-              type="text"
-              value={formData.bride}
-              onChange={(e) => handleChange("bride", e.target.value)}
-              placeholder="Enter bride's name"
-            />
-          </div>
+          {[
+            { label: "Bride's Name", field: "bride" },
+            { label: "Groom's Name", field: "groom" },
+            { label: "Wedding Date", field: "weddingDate", type: "date" },
+            { label: "Estimated Budget (ILS)", field: "estimatedBudget", type: "number" },
+          ].map(({ label, field, type = "text" }) => (
+            <div key={field} className={styles.formGroup}>
+              <label>{label}</label>
+              <input
+                type={type}
+                value={formData[field as keyof FormData]}
+                onChange={(e) => handleChange(field as keyof FormData, e.target.value)}
+              />
+              {formErrors[field] && <p className={styles.fieldError}>{formErrors[field]}</p>}
+            </div>
+          ))}
 
-          <div className={styles.formGroup}>
-            <label>Groom's Name</label>
-            <input
-              type="text"
-              value={formData.groom}
-              onChange={(e) => handleChange("groom", e.target.value)}
-              placeholder="Enter groom's name"
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Wedding Date</label>
-            <input
-              type="date"
-              value={formData.weddingDate}
-              onChange={(e) => handleChange("weddingDate", e.target.value)}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Estimated Budget (ILS)</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.estimatedBudget}
-              onChange={(e) => handleChange("estimatedBudget", e.target.value)}
-              placeholder="Enter estimated budget"
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>1. What's the vibe of your perfect wedding?</label>
-            <select value={formData.vibe} onChange={(e) => handleChange("vibe", e.target.value)}>
-              <option value="">Select</option>
-              <option>Intimate & cozy</option>
-              <option>Classic & elegant</option>
-              <option>Fun & colorful</option>
-              <option>Glamorous & luxe</option>
-              <option>Rustic & outdoorsy</option>
-              <option>I’m not sure yet</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>2. How big do you want your celebration to be?</label>
-            <select value={formData.guestCount} onChange={(e) => handleChange("guestCount", e.target.value)}>
-              <option value="">Select</option>
-              <option>Just the two of us (elopement)</option>
-              <option>Under 50 guests</option>
-              <option>50–100 guests</option>
-              <option>100–200 guests</option>
-              <option>200+ guests</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>3. What's your ideal wedding location?</label>
-            <select value={formData.location} onChange={(e) => handleChange("location", e.target.value)}>
-              <option value="">Select</option>
-              <option>Local venue in our hometown</option>
-              <option>Destination wedding</option>
-              <option>Beach or outdoor setting</option>
-              <option>City/urban vibes</option>
-              <option>Private home or backyard</option>
-              <option>Still exploring</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>4. Which part of the wedding is most important to you?</label>
-            <select value={formData.importantPart} onChange={(e) => handleChange("importantPart", e.target.value)}>
-              <option value="">Select</option>
-              <option>The ceremony</option>
-              <option>The party/reception</option>
-              <option>Food and drinks</option>
-              <option>The dress/outfits</option>
-              <option>Photos and memories</option>
-              <option>All of it!</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>5. What type of ceremony are you envisioning?</label>
-            <select value={formData.ceremonyType} onChange={(e) => handleChange("ceremonyType", e.target.value)}>
-              <option value="">Select</option>
-              <option>Religious/traditional</option>
-              <option>Civil/legal</option>
-              <option>Spiritual but not religious</option>
-              <option>Cultural/family-oriented</option>
-              <option>Not sure yet</option>
-            </select>
-          </div>
+          {/* Vibe, guestCount, location, etc. */}
+          {[
+            {
+              label: "1. What's the vibe of your perfect wedding?",
+              field: "vibe",
+              options: ["Intimate & cozy", "Classic & elegant", "Fun & colorful", "Glamorous & luxe", "Rustic & outdoorsy", "I’m not sure yet"],
+            },
+            {
+              label: "2. How big do you want your celebration to be?",
+              field: "guestCount",
+              options: ["Just the two of us (elopement)", "Under 50 guests", "50–100 guests", "100–200 guests", "200+ guests"],
+            },
+            {
+              label: "3. What's your ideal wedding location?",
+              field: "location",
+              options: ["Local venue in our hometown", "Destination wedding", "Beach or outdoor setting", "City/urban vibes", "Private home or backyard", "Still exploring"],
+            },
+            {
+              label: "4. Which part of the wedding is most important to you?",
+              field: "importantPart",
+              options: ["The ceremony", "The party/reception", "Food and drinks", "The dress/outfits", "Photos and memories", "All of it!"],
+            },
+            {
+              label: "5. What type of ceremony are you envisioning?",
+              field: "ceremonyType",
+              options: ["Religious/traditional", "Civil/legal", "Spiritual but not religious", "Cultural/family-oriented", "Not sure yet"],
+            },
+          ].map(({ label, field, options }) => (
+            <div key={field} className={styles.formGroup}>
+              <label>{label}</label>
+              <select
+                value={formData[field as keyof FormData]}
+                onChange={(e) => handleChange(field as keyof FormData, e.target.value)}
+              >
+                <option value="">Select</option>
+                {options.map((opt) => (
+                  <option key={opt}>{opt}</option>
+                ))}
+              </select>
+              {formErrors[field] && <p className={styles.fieldError}>{formErrors[field]}</p>}
+            </div>
+          ))}
 
           <button type="submit" className={styles.uploadButton}>Submit</button>
-
           {loading && <p className={styles.loading}>Generating your to-do list...</p>}
           {submitError && <p className={styles.errorMessage}>{submitError}</p>}
         </form>

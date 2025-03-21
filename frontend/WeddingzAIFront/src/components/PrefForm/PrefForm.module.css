@@ -266,3 +266,14 @@
 .priorityLow {
   background-color: #43a047;
 }
+
+.formGroup .fieldError {
+  color: #cc3366;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  padding-left: 0.25rem;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
