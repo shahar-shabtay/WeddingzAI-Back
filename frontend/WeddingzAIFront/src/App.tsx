@@ -1,11 +1,14 @@
-import JsonUploader from "./components/JsonUploader/JsonUploader";
+import { Routes, Route, BrowserRouter } from "react-router-dom";
+import PrefFormPage from "./pages/PrefFormPage";
+import TodoListPage from "./pages/TodoListPage";
 
-function App() {
+export default function App() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <JsonUploader />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<PrefFormPage />} />
+        <Route path="/todolist" element={<TodoListPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;
