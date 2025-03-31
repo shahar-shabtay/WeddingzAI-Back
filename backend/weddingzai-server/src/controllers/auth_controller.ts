@@ -63,15 +63,15 @@ export const generateTokens = (_id: string): { accessToken: string, refreshToken
     }
 
     const accessToken = jwt.sign(
-        { _id: _id, randNum: random },
-        process.env.TOKEN_SECRET as string,
-        { expiresIn: process.env.ACCESS_TOKEN_EXPIRES }
+        { _id, randNum: random },
+        process.env.TOKEN_SECRET || "default_secret",
+        { expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES) || "15m" }
     );
-
+    
     const refreshToken = jwt.sign(
-        { _id: _id, randNum: random },
-        process.env.TOKEN_SECRET as string,
-        { expiresIn: process.env.REFRESH_TOKEN_EXPIRES }
+        { _id, randNum: random },
+        process.env.TOKEN_SECRET || "default_secret",
+        { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES) || "7d" }
     );
 
     return { accessToken, refreshToken };
