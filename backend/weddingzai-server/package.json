@@ -11,17 +11,24 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "google-auth-library": "^9.15.1",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.9",
-    "react-router-dom": "^7.4.0"
+    "react-router-dom": "^7.4.0",
+    "@types/jsonwebtoken": "^9.0.7"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.0",
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.10",
     "@types/supertest": "^6.0.2",
