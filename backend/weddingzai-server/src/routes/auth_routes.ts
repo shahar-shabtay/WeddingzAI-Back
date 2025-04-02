@@ -4,16 +4,16 @@ import authController from "../controllers/auth_controller";
 
 const router = express.Router();
 
-router.post("/register", authController.register);
+router.post("/auth/register", authController.register);
 
-router.post("/login", authController.login);
+router.post("/auth/login", authController.login);
 
-router.post("/logout", authController.logout);
+router.post("/auth/logout", authController.logout);
 
-router.post("/refresh", authController.refresh);
+router.post("/auth/refresh", authController.refresh);
 
-router.put("/user", authMiddleware, authController.updateUser);
+router.put("/auth/user", authMiddleware, authController.updateUser);
 
-router.post("/google", authController.googleSignIn);
+router.post("/auth/google", authController.googleSignIn);
 
 export default router;

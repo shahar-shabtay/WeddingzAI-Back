@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 
 export interface IUser {
-  username: string;
+  firstPartner: string;
+  secondPartner: string;
   email: string;
   password: string;
   refreshTokens?: string[],
@@ -13,10 +14,13 @@ export interface IUser {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const userSchema = new mongoose.Schema<IUser>({
-  username: {
+  firstPartner: {
     type: String,
-    required: true,
-    unique: true,
+    required: false,
+  },
+  secondPartner: {
+    type: String,
+    required: false,
   },
   email: {
     type: String,

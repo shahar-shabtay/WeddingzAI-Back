@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "cp .env.dev .env && nodemon ./src/server.ts",
+    "dev": "cp .env.dev .env && nodemon ./src/app.ts",
     "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand"
   },
   "keywords": [],
@@ -11,15 +11,16 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "google-auth-library": "^9.15.1",
     "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.13.1",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.9",
-    "react-router-dom": "^7.4.0",
-    "@types/jsonwebtoken": "^9.0.7"
+    "react-router-dom": "^7.4.0"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.0",

@@ -23,7 +23,6 @@ const googleSignIn = async (req: Request, res: Response) => {
                 user = await userModel.create({
                     'email': email,
                     'password': hashPassword,
-                    'username': payload.name,
                     'avatar': payload.picture
                 });
             }
@@ -44,7 +43,8 @@ const googleSignIn = async (req: Request, res: Response) => {
                 refreshToken: tokens.refreshToken,
                 accessToken: tokens.accessToken,
                 _id: user._id,
-                username: user.username,
+                firstPartner: user.firstPartner,
+                secondPartner: user.secondPartner,
                 email: user.email,
                 avatar: user.avatar,
             });
@@ -79,20 +79,15 @@ export const generateTokens = (_id: string): { accessToken: string, refreshToken
 
 // Register User
 const register = async (req: Request, res: Response) => {
-    const { username, email, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!email || !password || !username) {
+    if (!email || !password ) {
         res.status(400).send({ message: "Email and password are required." });
         return;
     }
 
     if (await userModel.findOne({ email })) {
         res.status(400).send({ message: "Email already exists." });
-        return;
-    }
-
-    if (await userModel.findOne({ username })) {
-        res.status(400).send({ message: "Username already taken." });
         return;
     }
 
@@ -108,7 +103,8 @@ const register = async (req: Request, res: Response) => {
             req.body.avatar = null;
         }
         const user = await userModel.create({
-            username: req.body.username,
+            firstPartner: req.body.firstPartner,
+            secondPartner: req.body.secondPartner,
             email: req.body.email,
             password: hashPassword,
             avatar: req.body.avatar,
@@ -124,13 +120,13 @@ const login = async (req: Request, res: Response) => {
     try {
         const user = await userModel.findOne({ email: req.body.email });
         if (!user) {
-            res.status(400).send({ message: "Invalid Username or Password" });
+            res.status(400).send({ message: "Invalid Email or Password" });
             return;
         }
 
         const validPassword = await bcrypt.compare(req.body.password, user.password);
         if (!validPassword) {
-            res.status(400).send({ message: "Invalid Username or Password" });
+            res.status(400).send({ message: "Invalid Email or Password" });
             return;
         }
 
@@ -150,7 +146,8 @@ const login = async (req: Request, res: Response) => {
             refreshToken: tokens.refreshToken,
             accessToken: tokens.accessToken,
             _id: user._id,
-            username: user.username,
+            firstPartner: user.firstPartner,
+            secondPartner: user.secondPartner,
             email: user.email,
             avatar: user.avatar,
         });
@@ -262,7 +259,7 @@ const refresh = async (req: Request, res: Response) => {
 // Update User
 const updateUser = async (req: Request, res: Response) => {
     const { userId } = req.params;
-    const { username, avatar } = req.body;
+    const { email, firstPartner, secondPartner, avatar } = req.body;
 
     try {
         const user = await userModel.findById(userId);
@@ -271,19 +268,22 @@ const updateUser = async (req: Request, res: Response) => {
             return;
         }
 
-        const userUsername = await userModel.findOne({ username: username });
-        if (userUsername) {
-            res.status(401).send({ message: "Username already taken" });
+        const userEmail = await userModel.findOne({ email: email });
+        if (userEmail) {
+            res.status(401).send({ message: "Email already taken" });
             return;
         }
 
-        if (username) user.username = username;
+        if (firstPartner) user.firstPartner = firstPartner;
+        if (secondPartner) user.secondPartner = secondPartner;
         if (avatar) user.avatar = avatar;
 
         const updatedUser = await user.save();
         console.log('User updated');
         res.status(200).send({
-            username: updatedUser.username,
+            email: updatedUser.email,
+            firstPartner: updatedUser.firstPartner,
+            secondPartner: updatedUser.secondPartner,
             avatar: updatedUser.avatar
         });
     } catch (error) {
