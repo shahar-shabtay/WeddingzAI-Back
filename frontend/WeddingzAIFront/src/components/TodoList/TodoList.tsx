@@ -41,8 +41,12 @@ export default function TodoList() {
       {todoList ? (
         <div className={styles.todoListContainer}>
           <h2 className={styles.todoTitle}>{todoList.weddingTodoListName}</h2>
-          <p className={styles.coupleNames}>👰 {todoList.bride} & 🤵 {todoList.groom}</p>
-          <p className={styles.weddingDate}>📅 Wedding Date: <strong>{todoList.weddingDate}</strong></p>
+          <p className={styles.coupleNames}>
+            👰 {todoList.bride} & 🤵 {todoList.groom}
+          </p>
+          <p className={styles.weddingDate}>
+            📅 Wedding Date: <strong>{todoList.weddingDate}</strong>
+          </p>
 
           {todoList.sections.length > 0 ? (
             todoList.sections.map((section, index) => (
@@ -54,12 +58,20 @@ export default function TodoList() {
                       <div className={styles.taskRow}>
                         <input type="checkbox" className={styles.checkbox} />
                         <div className={styles.taskInfo}>
-                          <strong className={styles.taskTitle}>{todo.task}</strong>
-                          <span className={`${styles.priority} ${styles[`priority${todo.priority}`]}`}>
+                          <strong className={styles.taskTitle}>
+                            {todo.task}
+                          </strong>
+                          <span
+                            className={`${styles.priority} ${
+                              styles[`priority${todo.priority}`]
+                            }`}
+                          >
                             {todo.priority}
                           </span>
                         </div>
-                        <span className={styles.dueDate}>📅 {todo.dueDate}</span>
+                        <span className={styles.dueDate}>
+                          📅 {todo.dueDate}
+                        </span>
                       </div>
                     </li>
                   ))}
