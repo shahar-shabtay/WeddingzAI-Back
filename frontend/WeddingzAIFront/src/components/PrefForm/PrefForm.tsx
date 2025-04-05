@@ -204,7 +204,7 @@ export default function PrefForm() {
           {currentStep === 2 && (
             <>
               <div className={styles.formGroup}>
-                <label>How many guests are you expecting? 👥</label>
+                <label>How many guests are you expecting?</label>
                 <select
                   value={formData.guestCount}
                   onChange={(e) =>
@@ -251,7 +251,7 @@ export default function PrefForm() {
 
               {formData.weddingDate === "" && (
                 <div className={styles.formGroup}>
-                  <label>Date Range 📅</label>
+                  <label>Date Range </label>
                   <select
                     value={formData.dateRange}
                     onChange={(e) =>
@@ -274,9 +274,7 @@ export default function PrefForm() {
               )}
 
               <div className={styles.formGroup}>
-                <label>
-                  What's the most important part of your wedding? 🎯
-                </label>
+                <label>What's the most important part of your wedding?</label>
                 <select
                   value={formData.importantPart}
                   onChange={(e) =>
@@ -295,7 +293,7 @@ export default function PrefForm() {
                 </select>
               </div>
               <div className={styles.formGroup}>
-                <label>What's your biggest priority when planning? 🔑</label>
+                <label>What's your biggest priority when planning? </label>
                 <select
                   value={formData.planningPriority}
                   onChange={(e) =>
@@ -316,7 +314,7 @@ export default function PrefForm() {
                 </select>
               </div>
               <div className={styles.formGroup}>
-                <label>Any must-haves on your wedding day? 💫</label>
+                <label>Any must-haves on your wedding day? </label>
                 <select
                   value={formData.mustHave}
                   onChange={(e) =>

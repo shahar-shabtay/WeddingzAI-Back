@@ -3,9 +3,12 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  background: url("../../assets/images/main-bg.png") no-repeat center center;
+  background-size: cover;
   background-color: #fff0f5;
   padding: 1rem;
   box-sizing: border-box;
+  background-attachment: fixed;
 }
 
 .formGroup input {
