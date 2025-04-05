@@ -180,7 +180,7 @@ export default function PrefForm() {
                 </div>
               )}
 
-              <div className={styles.buttonRow}>
+              <div className={styles.buttonRight}>
                 {currentStep > 1 && (
                   <button
                     type="button"
