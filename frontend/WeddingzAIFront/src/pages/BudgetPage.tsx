@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import "../styles/budget.css";
 import { FaTrashAlt, FaChevronDown } from "react-icons/fa";
+import {NavBar} from '../components/NavBar/NavBar';
 
 
 const categoryOptions = [
@@ -37,6 +38,8 @@ const BudgetPage = () => {
   ];
 
   return (
+    <div className="budget-page">
+        <NavBar />
     <div className="budget-container">
       <div>
         <h2 className="budget-title">Wedding Budget</h2>
@@ -143,6 +146,7 @@ const BudgetPage = () => {
           </PieChart>
         </div>
       )}
+    </div>
     </div>
   );  
 };
