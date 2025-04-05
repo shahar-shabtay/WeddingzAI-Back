@@ -1,20 +1,25 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { z } from "zod";
+import formService from "../../services/form-service";
 import styles from "./PrefForm.module.css";
 
-type FormData = {
-  hasDateAndVenue: string;
-  weddingDate: string;
-  venue: string;
-  guestCount: string;
-  weddingStyle: string;
-  venueType: string; // Added venueType
-  dateRange: string; // Added dateRange
-  importantPart: string; // Added importantPart
-  planningPriority: string; // Added planningPriority
-  mustHave: string; // Added mustHave
-  ceremonyTime: string; // Added ceremonyTime
-  additionalNotes: string; // Added additionalNotes
-};
+const formSchema = z.object({
+  hasDateAndVenue: z.string(),
+  weddingDate: z.string(),
+  venue: z.string(),
+  guestCount: z.string(),
+  weddingStyle: z.string(),
+  venueType: z.string(),
+  dateRange: z.string(),
+  importantPart: z.string(),
+  planningPriority: z.string(),
+  mustHave: z.string(),
+  ceremonyTime: z.string(),
+  additionalNotes: z.string(),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 export default function PrefForm() {
   const [formData, setFormData] = useState<FormData>({
@@ -31,6 +36,10 @@ export default function PrefForm() {
     ceremonyTime: "", // Initialized ceremonyTime
     additionalNotes: "", // Initialized additionalNotes
   });
+  const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+  const [submitError, setSubmitError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<number>(1);
 
   const handleChangeDateAndVenue = (value: string) => {
@@ -51,6 +60,47 @@ export default function PrefForm() {
     setCurrentStep((prev) => (prev > 1 ? prev - 1 : prev));
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setSubmitError(null);
+
+    const validation = formSchema.safeParse(formData);
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      validation.error.errors.forEach((err) => {
+        const field = err.path[0] as string;
+        fieldErrors[field] = err.message;
+      });
+      setFormErrors(fieldErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const jsonBlob = new Blob([JSON.stringify(formData, null, 2)], {
+        type: "application/json",
+      });
+      const jsonFile = new File([jsonBlob], "preferences.json", {
+        type: "application/json",
+      });
+
+      const response = await formService.uploadFormJson(jsonFile);
+      localStorage.setItem("todoList", JSON.stringify(response.data.todoList));
+      navigate("/todolist");
+    } catch (error: unknown) {
+      if (typeof error === "object" && error !== null && "response" in error) {
+        const err = error as { response?: { data?: { error?: string } } };
+        setSubmitError(err.response?.data?.error || "Upload failed.");
+      } else {
+        setSubmitError("Upload failed.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.formContainer}>
@@ -60,7 +110,7 @@ export default function PrefForm() {
           personalized wedding to-do list.
         </p>
 
-        <form>
+        <form onSubmit={handleSubmit}>
           {currentStep === 1 && (
             <>
               <div className={styles.formGroup}>
@@ -130,14 +180,24 @@ export default function PrefForm() {
                 </div>
               )}
 
-              <button type="button" onClick={handleNextStep}>
-                Next
-              </button>
-              {currentStep > 1 && (
-                <button type="button" onClick={handlePreviousStep}>
-                  Back
+              <div className={styles.buttonRow}>
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    className={styles.navButton}
+                    onClick={handlePreviousStep}
+                  >
+                    Back
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={styles.navButton}
+                  onClick={handleNextStep}
+                >
+                  Next
                 </button>
-              )}
+              </div>
             </>
           )}
 
@@ -307,14 +367,20 @@ export default function PrefForm() {
                 />
               </div>
 
-              <button type="button" onClick={handleNextStep}>
-                Next
-              </button>
-              {currentStep > 1 && (
-                <button type="button" onClick={handlePreviousStep}>
-                  Back
+              <div className={styles.buttonRow}>
+                {currentStep > 1 && (
+                  <button
+                    type="button"
+                    className={styles.navButton}
+                    onClick={handlePreviousStep}
+                  >
+                    Back
+                  </button>
+                )}
+                <button type="submit" className={styles.navButton}>
+                  submit
                 </button>
-              )}
+              </div>
             </>
           )}
         </form>
