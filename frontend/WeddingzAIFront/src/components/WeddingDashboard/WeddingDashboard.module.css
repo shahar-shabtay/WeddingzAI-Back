@@ -1,0 +1,82 @@
+.main {
+    height: 100vh;
+    width: 100%;
+    background: url('../../assets/images/main-bg.png') no-repeat center center;
+    background-size: cover;
+    background-color: #fff0f5;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  
+  .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 1300px;
+      margin: 150px auto;
+      height: 75%;
+      overflow: hidden;
+      padding: 10px;
+  }
+  
+  .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(247, 243, 243, 0.2);
+  }
+  
+  .budget {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+  }
+  
+  .guests {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+  }
+  
+  .seating {
+      grid-column: 3 / 5;
+      grid-row: 1 / 2;
+  }
+  
+  .calendar {
+      grid-column: 1 / 2;
+      grid-row: 2 / 3;
+  }
+  
+  .menu {
+      grid-column: 2 / 3;
+      grid-row: 2 / 4;
+  }
+  
+  .todo {
+      grid-column: 3 / 4;
+      grid-row: 2 / 3;
+  }
+  
+  .vendors {
+      grid-column: 1 / 2;
+      grid-row: 3 / 4;
+  }
+  
+  .view3d {
+      grid-column: 3 / 4;
+      grid-row: 3 / 4;
+  }
+  
+  .invitation {
+      grid-column: 4 / 5;
+      grid-row: 2 / 4;
+  }
+  
