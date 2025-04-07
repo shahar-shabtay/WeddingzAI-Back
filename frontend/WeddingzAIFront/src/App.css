@@ -1,8 +1,0 @@
-.app {
-    min-height: 100vh;
-    background: 
-      linear-gradient(135deg, #fff0f5 0%, #f8f4f9 100%),
-      url('./assets/images/bg-flower.svg') no-repeat bottom left;
-    background-size: cover;
-    background-blend-mode: lighten;
-  }
