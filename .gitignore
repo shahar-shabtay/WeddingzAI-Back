@@ -58,6 +58,7 @@ yarn-error.log*
 # Server Storage Files
 storage/
 
+
 # Front directory 
 front/
 
