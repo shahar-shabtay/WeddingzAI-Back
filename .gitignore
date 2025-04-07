@@ -1,5 +1,6 @@
 # Node.js dependencies
 /node_modules/
+package-lock.json
 
 # Logs
 logs
@@ -57,5 +58,7 @@ yarn-error.log*
 # Server Storage Files
 storage/
 
-# Front directory
+
+# Front directory 
 front/
+
