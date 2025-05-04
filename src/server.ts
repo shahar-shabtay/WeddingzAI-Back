@@ -49,6 +49,11 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "public", "uploads"))
+);
+
 
 
 
