@@ -31,6 +31,10 @@ app.use((req, res, next) => {
   next();
 })
 
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "uploads"))
+);
 
 // Routes
 app.use(apiBase, formUploadRoutes);
@@ -45,10 +49,7 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "..", "public", "uploads"))
-);
+
 
 
 // app.listen(PORT, () => {
