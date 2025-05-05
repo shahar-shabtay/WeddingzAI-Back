@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 // Import routes
 import formUploadRoutes from "./routes/form-routes";
 import authRoutes from "./routes/auth_routes";
+import vendorsRoute from "./routes/vendor_routes";
 
 // const app: Application = express();
 const app = express();
@@ -30,10 +31,15 @@ app.use((req, res, next) => {
   next();
 })
 
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "uploads"))
+);
 
 // Routes
 app.use(apiBase, formUploadRoutes);
 app.use(apiBase, authRoutes);
+app.use(apiBase, vendorsRoute);
 
 // Add GET / route for project owners
 app.get("/", (req: Request, res: Response) => {
@@ -42,6 +48,8 @@ app.get("/", (req: Request, res: Response) => {
     project: "WeddingZai Server",
   });
 });
+
+
 
 
 // app.listen(PORT, () => {
