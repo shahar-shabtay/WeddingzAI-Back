@@ -18,9 +18,12 @@
     "express": "^4.21.2",
     "google-auth-library": "^9.15.1",
     "jsonwebtoken": "^9.0.2",
+    "langchain": "^0.3.20",
     "mongoose": "^8.13.1",
     "multer": "^1.4.5-lts.1",
+    "node-cache": "^5.1.2",
     "nodemon": "^3.1.9",
+    "openai": "^4.97.0",
     "react-router-dom": "^7.4.0"
   },
   "devDependencies": {
