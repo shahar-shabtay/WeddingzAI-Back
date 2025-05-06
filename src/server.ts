@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 // Import routes
-import formUploadRoutes from "./routes/form-routes";
+import tdlRoutes from "./routes/tdl-routes";
 import authRoutes from "./routes/auth_routes";
 import vendorsRoute from "./routes/vendor_routes";
 
@@ -37,7 +37,7 @@ app.use(
 );
 
 // Routes
-app.use(apiBase, formUploadRoutes);
+app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, vendorsRoute);
 
