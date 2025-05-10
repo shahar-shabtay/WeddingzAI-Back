@@ -1,6 +1,7 @@
-import express from "express";
-import { getVendorList } from "../controllers/vendors_controller";
+import { Router } from "express";
+import { scrapeOneDjController } from "../controllers/dj-controller";
 
-const router = express.Router();
-router.post("/vendors", getVendorList);
+const router = Router();
+router.post("/scrape-one", scrapeOneDjController);
+
 export default router;
