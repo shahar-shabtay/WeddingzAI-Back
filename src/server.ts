@@ -1,17 +1,19 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from 'path';
-import dotenv from "dotenv";
+
 import mongoose from "mongoose";
 
 // Import routes
 import tdlRoutes from "./routes/tdl-routes";
 import authRoutes from "./routes/auth_routes";
 import vendorsRoute from "./routes/vendor_routes";
-
 // const app: Application = express();
 const app = express();
-dotenv.config();
+
 
 const apiBase = "/api";
 
