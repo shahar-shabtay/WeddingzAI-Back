@@ -33,11 +33,7 @@ app.use((req, res, next) => {
   next();
 })
 
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "..", "uploads"))
-);
-
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 // Routes
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
