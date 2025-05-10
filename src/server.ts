@@ -7,6 +7,8 @@ import mongoose from "mongoose";
 // Import routes
 import tdlRoutes from "./routes/tdl-routes";
 import authRoutes from "./routes/auth_routes";
+// import budgetRoutes from "./routes/budget.routes";
+import detailsMatterRoutes from "./routes/details_matter.routes";
 import vendorsRoute from "./routes/vendor_routes";
 
 // const app: Application = express();
@@ -39,6 +41,8 @@ app.use(
 // Routes
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
+// app.use(apiBase, budgetRoutes);
+app.use(apiBase, detailsMatterRoutes);
 app.use(apiBase, vendorsRoute);
 
 // Add GET / route for project owners
