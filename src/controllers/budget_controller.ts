@@ -50,6 +50,31 @@ class BudgetController extends BaseController<IBudget> {
       res.status(500).json({ message: "Failed to fetch budget", error });
     }
   }
+
+  async update(req: AuthRequest, res: Response) {
+    try {
+      const userId = this.getUserId(req);
+      if (!userId) throw new Error("Unauthorized");
+
+      const updatedData = req.body;
+
+      const existingBudget = await this.model.findOne({ user: userId });
+      if (!existingBudget) {
+        res.status(404).json({ message: "No budget found to update" });
+        return;
+      }
+
+      existingBudget.totalBudget = updatedData.totalBudget;
+      existingBudget.categories = updatedData.categories;
+
+      await existingBudget.save();
+      this.sendSuccess(res, existingBudget, "Budget updated");
+      return;
+    } catch (err: any) {
+      this.sendError(res, err, err.message === "Unauthorized" ? 401 : 500);
+      return;
+    }
+  }
 }
 
 export default new BudgetController();
