@@ -35,10 +35,10 @@ app.use((req, res, next) => {
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Routes
+app.use("/api/budget", budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, vendorsRoute);
-app.use(apiBase, budgetRoutes);
 
 // Add GET / route for project owners
 app.get("/", (req: Request, res: Response) => {

@@ -1,7 +1,8 @@
-import mongoose from "mongoose";
+import mongoose, { PopulatedDoc } from "mongoose";
+import { IUser } from "./user-model";
 
 export interface IBudget {
-  userId: mongoose.Types.ObjectId;
+  user: PopulatedDoc<IUser>;
   totalBudget: number;
   categories: {
     name: string;
@@ -13,7 +14,7 @@ export interface IBudget {
 
 const budgetSchema = new mongoose.Schema<IBudget>(
   {
-    userId: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
       required: true,
@@ -44,4 +45,4 @@ const budgetSchema = new mongoose.Schema<IBudget>(
 
 const budgetModel = mongoose.model<IBudget>("budgets", budgetSchema);
 
-export default budgetModel; 
+export default budgetModel;
