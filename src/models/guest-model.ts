@@ -1,49 +1,49 @@
 import mongoose from "mongoose";
 
 export interface IGuest {
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   fullName: string;
-  email?: string;
+  email: string;
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
-  mealPreference?: string;
-  notes?: string;
 }
 
-const guestSchema = new Schema<IGuest>({
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
-      required: true
-    },
-    fullName: {
-      type: String,
-      required: [true, "Guest name is required"],
-      trim: true
-    },
-    email: {
-      type: String,
-      trim: true,
-      lowercase: true
-    },
-    phone: {
-      type: String,
-      trim: true
-    },
-    rsvp: {
-      type: String,
-      enum: ["yes", "no", "maybe"],
-      default: "maybe"
-    },
-    mealPreference: {
-      type: String
-    },
-    notes: {
-      type: String
+// Regular expression for email validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const guestSchema = new mongoose.Schema<IGuest>({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
+    required: true
+  },
+  fullName: {
+    type: String,
+    required: [true, "Full name is required"],
+    trim: true
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    trim: true,
+    lowercase: true,
+    validate: {
+      validator: (value: string) => emailRegex.test(value),
+      message: (props: { value: string }) =>
+        `${props.value} is not a valid email address`
     }
-  }, {
-    timestamps: true
-  });  
+  },
+  phone: {
+    type: String,
+    trim: true
+  },
+  rsvp: {
+    type: String,
+    enum: ["yes", "no", "maybe"],
+    default: "maybe"
+  }
+});
 
 const guestModel = mongoose.model<IGuest>("guests", guestSchema);
 
