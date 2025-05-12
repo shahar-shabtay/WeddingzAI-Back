@@ -1,53 +1,59 @@
 import mongoose from "mongoose";
 
-export interface IUser {
-  firstPartner: string;
-  secondPartner: string;
-  email: string;
-  password: string;
-  refreshTokens?: string[],
+export interface IGuest {
+  userId: mongoose.Types.ObjectId;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  rsvp?: "yes" | "no" | "maybe";
+  mealPreference?: string;
+  notes?: string;
   _id?: string;
-  avatar?: string;
 }
 
-// Regular expression for email validation
+// Regular expression for email validation (optional field)
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const userSchema = new mongoose.Schema<IUser>({
-  firstPartner: {
-    type: String,
-    required: false,
+const guestSchema = new mongoose.Schema<IGuest>({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "users",
+    required: true
   },
-  secondPartner: {
+  fullName: {
     type: String,
-    required: false,
+    required: [true, "Full name is required"],
+    trim: true
   },
   email: {
     type: String,
-    required: [true, "Email is required"],
-    unique: true,
     trim: true,
     lowercase: true,
     validate: {
-      validator: (value: string) => emailRegex.test(value),
+      validator: (value: string) => !value || emailRegex.test(value),
       message: (props: { value: string }) =>
-        `${props.value} is not a valid email address`,
-    },
+        `${props.value} is not a valid email address`
+    }
   },
-  password: {
+  phone: {
     type: String,
-    required: [true, "Password is required"],
-    minlength: [6, "Password must be at least 6 characters long"],
+    trim: true
   },
-  refreshTokens: {
-    type: [String],
-    default: []
+  rsvp: {
+    type: String,
+    enum: ["yes", "no", "maybe"],
+    default: "maybe"
   },
-  avatar: {
-    type: String
+  mealPreference: {
+    type: String,
+    trim: true
+  },
+  notes: {
+    type: String,
+    trim: true
   }
 });
 
-const userModel = mongoose.model<IUser>("users", userSchema);
+const guestModel = mongoose.model<IGuest>("guests", guestSchema);
 
-export default userModel;
+export default guestModel;
