@@ -12,4 +12,7 @@ router.get(   '/guests/mine',   authMiddleware, guestsController.getMine.bind(gu
 router.get(   '/guests/:id',    authMiddleware, guestsController.getById.bind(guestsController));
 router.delete('/guests/:id',    authMiddleware, guestsController.deleteItem.bind(guestsController));
 
+// POST /guests
+router.post(  '/guests',        authMiddleware, guestsController.create);
+
 export default router;
