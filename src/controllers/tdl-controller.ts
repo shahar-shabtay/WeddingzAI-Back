@@ -11,9 +11,6 @@ class TDLController extends BaseController<ITDL> {
     super(tdlModel);
   }
 
-  /**
-   * POST /tdl/upload-form
-   */
   upload = async (
     req: AuthRequest,
     res: Response,
