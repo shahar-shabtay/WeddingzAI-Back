@@ -10,25 +10,25 @@ const upload = multer({ dest: "uploads/" });
 
 // Create new
 router.post(
-  "/upload-form",
+  "/tdl/upload-form",
   authMiddleware,
   upload.single("file"),
   (req, res, next) => tdlController.upload(req, res, next)
 );
 
 // List all
-router.get("/", authMiddleware, (req, res) => tdlController.getAll(req, res));
+router.get("/tdl", authMiddleware, (req, res) => tdlController.getAll(req, res));
 
 // List only mine
-router.get("/mine", authMiddleware, (req, res) => tdlController.getMine(req, res));
+router.get("/tdl/mine", authMiddleware, (req, res) => tdlController.getMine(req, res));
 
 // Get by ID
-router.get("/:id", authMiddleware, (req, res) =>
+router.get("/tdl/:id", authMiddleware, (req, res) =>
   tdlController.getById(req, res)
 );
 
 // Delete
-router.delete("/:id", authMiddleware, (req, res) =>
+router.delete("/tdl/:id", authMiddleware, (req, res) =>
   tdlController.deleteItem(req, res)
 );
 

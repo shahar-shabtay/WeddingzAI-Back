@@ -1,18 +1,24 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
+import path from 'path';
 import mongoose from "mongoose";
 
 // Import routes
 import tdlRoutes from "./routes/tdl-routes";
 import authRoutes from "./routes/auth_routes";
+// import budgetRoutes from "./routes/budget.routes";
+import detailsMatterRoutes from "./routes/details_matter.routes";
 import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 
 // const app: Application = express();
 const app = express();
-dotenv.config();
+
 
 const apiBase = "/api";
 
@@ -32,12 +38,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
+app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 // Routes
 app.use("/api/budget", budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
+// app.use(apiBase, budgetRoutes);
+app.use(apiBase, detailsMatterRoutes);
 app.use(apiBase, vendorsRoute);
 
 // Add GET / route for project owners
@@ -53,6 +61,7 @@ app.get("/", (req: Request, res: Response) => {
     project: "WeddingZai Server",
   });
 });
+
 
 // app.listen(PORT, () => {
 // console.log(`Server running on http://localhost:${PORT}`);
