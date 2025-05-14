@@ -3,7 +3,6 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { DjModel, IDj } from "../models/dj-model";
 
-// --- Firecrawl response types matching your prompt ---
 interface FirecrawlFaq      { question: string; answer: string }
 interface FirecrawlReview   { reviewer: string; date: string; comment: string }
 
@@ -13,7 +12,6 @@ interface FirecrawlDj {
   coverImage?:   string;
   profileImage?: string;
   about?:        string;
-  details?:      string[];
   price_range?:  string;
   services?:     string;
   area?:         string;
@@ -29,10 +27,10 @@ interface FirecrawlDj {
     youtube?:   string;
   };
   website?:     string;
+  phone?:     string;
 }
 
 export async function scrapeAndSaveDj(pageUrl: string): Promise<IDj> {
-  // 0) If already scraped, just return the existing doc
   const existing = await DjModel.findOne({ sourceUrl: pageUrl }).exec();
   if (existing) {
     console.log(`[dj-scrape-service] Skip, already scraped: ${pageUrl}`);
@@ -43,14 +41,12 @@ export async function scrapeAndSaveDj(pageUrl: string): Promise<IDj> {
   const apiUrl = process.env.FIRECRAWL_API_URL!;
   const app    = new FirecrawlApp({ apiKey, apiUrl });
 
-  // 1) Build your new prompt
   const prompt = `
 You are scraping a DJ profile page at ${pageUrl}.  
 On the page you will find these sections in order:
 
 1) Header: DJ’s name and star-rating.  
 2) Cover + About: profile image, followed by About block.  
-3) Details list (optional).  
 4) Extra info (optional), with exactly these keys (use empty string if missing):
    - price_range  
    - services  
@@ -64,6 +60,7 @@ On the page you will find these sections in order:
    { reviewer: string; date: string; comment: string }  
 8) Social media links (optional): facebook, instagram, twitter, youtube  
 9) Website link (optional)
+10) phone number (optional)
 
 Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
@@ -75,7 +72,6 @@ export interface Dj {
   coverImage?:   string;
   profileImage?: string;
   about?:        string;
-  details?:      string[];
   price_range?:  string;
   services?:     string;
   area?:         string;
@@ -91,6 +87,7 @@ export interface Dj {
     youtube?:   string;
   };
   website?:     string;
+  phone?:     string;
 }
 \`\`\`
 
@@ -99,7 +96,6 @@ Translate all text to English.
 HTML URL: ${pageUrl}
   `.trim();
 
-  // 2) Firecrawl extraction
   let result;
   try {
     result = await app.extract([pageUrl], { prompt });
@@ -116,14 +112,12 @@ HTML URL: ${pageUrl}
     throw new Error("Firecrawl extract failed: " + result.error);
   }
 
-  // 3) Normalize into a single object
   const raw = Array.isArray(result.data)
     ? (result.data[0] as FirecrawlDj)
     : (result.data as FirecrawlDj);
 
   console.log("🔍 Raw Firecrawl output:", JSON.stringify(raw, null, 2));
 
-  // 4) Build the upsert document (use snake_case keys to match your prompt/interface)
   const doc: Partial<IDj> = {
     name:         raw.name           || "",
     rating:       raw.rating         ?? 0,
@@ -131,7 +125,6 @@ HTML URL: ${pageUrl}
     profileImage: raw.profileImage   || "",
 
     about:        raw.about          || "",
-    details:      Array.isArray(raw.details)      ? raw.details       : [],
     price_range:  raw.price_range    || "",
     services:     raw.services       || "",
     area:         raw.area           || "",
@@ -150,11 +143,11 @@ HTML URL: ${pageUrl}
     },
 
     website:   raw.website     || "",
+    phone:     raw.phone     || "",
     sourceUrl: pageUrl,
     scrapedAt: new Date(),
   };
 
-  // 5) Upsert into Mongo
   const saved = await DjModel.findOneAndUpdate(
     { sourceUrl: pageUrl },
     doc,
