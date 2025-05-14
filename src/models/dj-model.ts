@@ -8,7 +8,6 @@ export interface IDj extends Document {
   coverImage?:   string;
   profileImage?: string;
   about?:        string;
-  details?:      string[];
   price_range?:  string;
   services?:     string;
   area?:         string;
@@ -24,6 +23,7 @@ export interface IDj extends Document {
     youtube?:   string;
   };
   website?:     string;
+  phone?:     string;
   sourceUrl:    string;
   scrapedAt:    Date;
 }
@@ -34,7 +34,6 @@ const DjSchema = new Schema<IDj>({
   coverImage:    String,
   profileImage:  String,
   about:         String,
-  details:       { type: [String], default: [] },
   price_range:   { type: String, default: "" },
   services:      { type: String, default: "" },
   area:          { type: String, default: "" },
