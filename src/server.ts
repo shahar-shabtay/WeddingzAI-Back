@@ -14,6 +14,8 @@ import authRoutes from "./routes/auth_routes";
 import guestRoutes from "./routes/guest-routes";
 import detailsMatterRoutes from "./routes/details_matter.routes";
 import vendorsRoute from "./routes/vendor_routes";
+import fileRoutes from "./routes/file-routes";
+
 // const app: Application = express();
 const app = express();
 
@@ -44,6 +46,8 @@ app.use(apiBase, authRoutes);
 app.use(apiBase, detailsMatterRoutes);
 app.use(apiBase, vendorsRoute);
 app.use(apiBase, guestRoutes);
+app.use(apiBase, fileRoutes);
+
 
 // Add GET / route for project owners
 app.get("/", (req: Request, res: Response) => {
