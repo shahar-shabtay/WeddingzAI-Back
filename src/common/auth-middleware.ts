@@ -5,7 +5,10 @@ import jwt from "jsonwebtoken";
 import { IUser } from "../models/user-model";
 
 export interface AuthRequest extends Request {
-  user?: Pick<IUser, "_id" | "email" | "firstPartner" | "secondPartner" | "avatar">;
+  user?: Pick<
+    IUser,
+    "_id" | "email" | "firstPartner" | "secondPartner" | "avatar"
+  >;
 }
 
 interface TokenPayload {
@@ -16,14 +19,20 @@ interface TokenPayload {
   avatar?: string;
 }
 
-const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void => {
+const authMiddleware = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   const authHeader = req.header("Authorization");
+
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     res.status(401).json({ message: "Unauthorized: No token provided" });
     return;
   }
 
   const token = authHeader.split(" ")[1];
+
   const secret = process.env.TOKEN_SECRET;
   if (!secret) {
     res.status(500).json({ message: "Server error: Missing token secret" });

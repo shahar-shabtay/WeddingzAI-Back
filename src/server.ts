@@ -3,8 +3,9 @@ dotenv.config();
 
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
+import path from "path";
+import dotenv from "dotenv";
 import path from 'path';
-
 import mongoose from "mongoose";
 
 // Import routes
@@ -14,7 +15,9 @@ import authRoutes from "./routes/auth_routes";
 import guestRoutes from "./routes/guest-routes";
 import detailsMatterRoutes from "./routes/details_matter.routes";
 import vendorsRoute from "./routes/vendor_routes";
+import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
+
 
 // const app: Application = express();
 const app = express();
@@ -36,10 +39,12 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Methods", "*");
   res.header("Access-Control-Allow-Headers", "*");
   next();
-})
+});
+
 
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 // Routes
+app.use("/api/budget", budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 // app.use(apiBase, budgetRoutes);
@@ -52,14 +57,16 @@ app.use(apiBase, fileRoutes);
 // Add GET / route for project owners
 app.get("/", (req: Request, res: Response) => {
   res.json({
-    owners: ["Gavriel Matatov", "Gal Ternovsky", "Shahar Shabtay", "Gefen Kidmi", "Ziv Klien"],
+    owners: [
+      "Gavriel Matatov",
+      "Gal Ternovsky",
+      "Shahar Shabtay",
+      "Gefen Kidmi",
+      "Ziv Klien",
+    ],
     project: "WeddingZai Server",
   });
 });
-
-
-
-
 
 
 // app.listen(PORT, () => {
