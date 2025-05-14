@@ -1,0 +1,40 @@
+{
+  "dj": {
+    "searchUrl": "https://urbanbridesmag.co.il/djs",
+    "promptTemplate": 
+    "
+        You are scraping a DJ profile page at ${pageUrl}.  
+        On the page you will find these sections in order:
+
+        1) Header: DJ’s name and star-rating.  
+        2) Cover + About: profile image, followed by About block.  
+        3) Details list (optional).  
+        4) Extra info (optional): price range, services, area, hour-limits, genres.  
+        5) Event photos (optional).  
+        6) FAQs (optional).  
+        7) Bride’s Words (optional): reviewer, date, comment.  
+        8) Social media links (optional).
+        9) website link (optional).
+
+        Return ONLY valid JSON (or an array) with keys:
+        json
+        {
+        "name":"…","rating":0,"profile_image":"…","about":"…",
+        "details":[],"extra_info":[],"event_photos":[],
+        "faqs":[],"bride_reviews":[],"social_media":{ "facebook":"",… }
+        }
+
+        Empty string or empty array for any missing section.  
+        Translate all text to English.  
+        HTML URL: ${pageUrl}
+    "
+  },
+  "venue": {
+    "searchUrl": "https://urbanbridesmag.co.il/halls",
+    "promptTemplate": "Extract venues profiles including name, aboute address, capacity, price, tags. Only include halls on the seaside.\\n\nTask: {{TASK_DESCRIPTION}}"
+  },
+  "photographer": {
+    "searchUrl": "https://urbanbridesmag.co.il/photographers",
+    "promptTemplate": "Extract photographer profiles including name, portfolio_url, contact, reviews.\\n\nTask: {{TASK_DESCRIPTION}}"
+  }
+}
