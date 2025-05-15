@@ -1,12 +1,10 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from "path";
 import dotenv from "dotenv";
-import path from 'path';
 import mongoose from "mongoose";
+
+dotenv.config();
 
 // Import routes
 import tdlRoutes from "./routes/tdl-routes";
@@ -17,17 +15,16 @@ import detailsMatterRoutes from "./routes/details_matter.routes";
 import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
-
+import tableRoutes from "./routes/table-route";
 
 // const app: Application = express();
 const app = express();
-
 
 const apiBase = "/api";
 
 // CORS Configuration to allow specific origin
 const corsOptions = {
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
@@ -41,10 +38,11 @@ app.use((req, res, next) => {
   next();
 });
 
-
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 // Routes
 app.use("/api/budget", budgetRoutes);
+app.use("/api/tables", tableRoutes);
+
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 // app.use(apiBase, budgetRoutes);
@@ -52,7 +50,6 @@ app.use(apiBase, detailsMatterRoutes);
 app.use(apiBase, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
-
 
 // Add GET / route for project owners
 app.get("/", (req: Request, res: Response) => {
@@ -67,7 +64,6 @@ app.get("/", (req: Request, res: Response) => {
     project: "WeddingZai Server",
   });
 });
-
 
 // app.listen(PORT, () => {
 // console.log(`Server running on http://localhost:${PORT}`);
