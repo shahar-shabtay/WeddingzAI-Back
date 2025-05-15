@@ -48,6 +48,65 @@ class GuestsController extends BaseController<IGuest> {
     }
   };
 
+  public update = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const { id } = req.params;
+      const { fullName, email, phone, rsvp } = req.body;
+
+      const updatedGuest = await guestModel.findOneAndUpdate(
+        { _id: id, userId },
+        { fullName, email, phone, rsvp },
+        { new: true }
+      );
+
+      if (!updatedGuest) {
+        res.status(404).json({ message: 'Guest not found' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Guest updated', data: updatedGuest });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public remove = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const { id } = req.params;
+
+      const deleted = await guestModel.findOneAndDelete({ _id: id, userId });
+
+      if (!deleted) {
+        res.status(404).json({ message: 'Guest not found' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Guest deleted', data: deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+
   public sendInvitation = async (
     req: AuthRequest,
     res: Response,
@@ -75,7 +134,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      await sendInvitationEmails(recipients, partner1, partner2, weddingDate); // ✅ use plural function
+      await sendInvitationEmails(recipients, partner1, partner2, weddingDate);
 
       res.status(200).json({ message: 'Invitations sent to all guests' });
     } catch (err) {
