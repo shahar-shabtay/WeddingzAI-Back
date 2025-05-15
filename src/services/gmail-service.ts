@@ -8,8 +8,8 @@ const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
  * Load OAuth2 client using saved credentials and token.
  */
 async function getOAuth2Client() {
-  const credentialsPath = path.join(__dirname, "../../config/credentials.json");
-  const tokenPath = path.join(__dirname, "../../config/token.json");
+  const credentialsPath = path.join(__dirname, "../config/gmail_cred.json");
+  const tokenPath = path.join(__dirname, "../config/gmail_token.json");
 
   const credentials = JSON.parse(await fs.readFile(credentialsPath, "utf8"));
   const { client_secret, client_id, redirect_uris } = credentials.installed;
