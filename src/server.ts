@@ -3,7 +3,7 @@ dotenv.config();
 
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
-import path from "path";
+import path from 'path';
 import mongoose from "mongoose";
 
 // Routes
@@ -42,7 +42,7 @@ app.use("/api/budget", budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, detailsMatterRoutes);
-app.use(apiBase, vendorsRoute);
+app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 
@@ -60,19 +60,20 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// Init
-const initApp = async (): Promise<Express> => {
-  return new Promise((resolve, reject) => {
+const initApp = async () => {
+  return new Promise<Express>((resolve, reject) => {
     const db = mongoose.connection;
     db.on("error", console.error);
     db.once("open", () => console.log("Connected to MongoDB"));
 
-    if (!process.env.MONGO_URI) return reject("Missing MONGO_URI");
-
-    mongoose.connect(process.env.MONGO_URI).then(() => {
-      console.log("initApp finish");
-      resolve(app);
-    });
+    if (process.env.MONGO_URI === undefined) {
+      reject();
+    } else {
+      mongoose.connect(process.env.MONGO_URI).then(() => {
+        console.log("initApp finish");
+        resolve(app);
+      });
+    }
   });
 };
 
