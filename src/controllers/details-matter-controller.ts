@@ -3,8 +3,14 @@ import { Request, Response } from 'express';
 
 const api = new OpenAI({
   apiKey: process.env.AIMLAPI_KEY,
-  baseURL: process.env.AI_BASE_URL || "https://api.aimlapi.com/v1",
+  baseURL: "https://api.aimlapi.com/v1",
 });
+
+// Add this at the top of your controller
+console.log('🔧 [Details Matter] API Configuration:', {
+    hasApiKey: !!process.env.AIMLAPI_KEY,
+    baseURL: process.env.AI_BASE_URL || "https://api.aimlapi.com/v1"
+  });
 
 const systemPrompt = `You are a wedding music expert. Given a user's wedding style and preferences, suggest 3 songs that would be perfect for their wedding. 
 For each song, provide:
@@ -35,11 +41,28 @@ const detailsMatterController = {
     const { prompt } = req.body;
 
     if (!prompt) {
-      res.status(400).json({ error: 'Missing prompt in request body' });
-      return;
-    }
+        console.log('❌ [Details Matter] Missing prompt');
+        res.status(400).json({ error: 'Missing prompt in request body' });
+        return;
+      }
 
     try {
+        console.log('🤖 [Details Matter] Request to AI API:', {
+            model: "gpt-3.5-turbo",
+            messages: [
+              {
+                role: "system",
+                content: systemPrompt,
+              },
+              {
+                role: "user",
+                content: prompt,
+              },
+            ],
+            temperature: 0.7,
+            max_tokens: 500,
+          });
+    
       const completion = await api.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
@@ -56,30 +79,36 @@ const detailsMatterController = {
         max_tokens: 500,
       });
 
+      console.log('✅ [Details Matter] AI API response:', completion);
+
       const response = completion.choices[0].message.content;
       if (!response) {
+        console.log('❌ [Details Matter] No content in AI response');
         res.status(500).json({ error: 'No response from AI' });
         return;
       }
       
       try {
+        console.log('🔄 [Details Matter] Parsing AI response:', response);
         const songs = JSON.parse(response);
         res.status(200).json(songs);
+        console.log('✅ [Details Matter] Successfully parsed AI response');
       } catch (parseError) {
-        console.error('Error parsing ChatGPT response:', parseError);
+        console.error('❌ [Details Matter] Error parsing ChatGPT response:', parseError);
         res.status(500).json({ error: 'Error processing AI response' });
       }
 
     } catch (error) {
+      console.error('❌ [Details Matter] Error details:', error);
       if (error instanceof RateLimitError) {
-        console.error('Rate limit error:', error);
+        console.error('⚠️ [Details Matter] Rate limit error:', error);
         res.status(429).json({ 
           error: 'Rate limit exceeded', 
           message: 'Please wait a few seconds before trying again',
           retryAfter: 5 // seconds
         });
       } else {
-        console.error('ChatGPT API error:', error);
+        console.error('❌ [Details Matter] ChatGPT API error:', error);
         res.status(500).json({ 
           error: 'An error occurred while processing your request',
           message: error instanceof Error ? error.message : 'Unknown error'
