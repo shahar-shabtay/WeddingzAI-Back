@@ -1,20 +1,23 @@
 import { google } from "googleapis";
 import path from "path";
 import fs from "fs/promises";
+import dotenv from "dotenv";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
 
+dotenv.config();
+
 async function getOAuth2Client() {
-  const credentialsPath = path.join(__dirname, "../config/gmail_cred.json");
-  const tokenPath = path.join(__dirname, "../config/gmail_token.json");
+  const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
+  const tokenJSON = Buffer.from(process.env.GMAIL_TOKEN_BASE64!, 'base64').toString('utf8');
 
-  const credentials = JSON.parse(await fs.readFile(credentialsPath, "utf8"));
-  const { client_secret, client_id, redirect_uris } = credentials.installed;
+  const credentials = JSON.parse(credJSON).installed;
+  const token = JSON.parse(tokenJSON);
 
+  const { client_id, client_secret, redirect_uris } = credentials;
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-  const token = JSON.parse(await fs.readFile(tokenPath, "utf8"));
-  oAuth2Client.setCredentials(token);
 
+  oAuth2Client.setCredentials(token);
   return oAuth2Client;
 }
 
