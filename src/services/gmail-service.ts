@@ -4,9 +4,6 @@ import fs from "fs/promises";
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
 
-/**
- * Load OAuth2 client using saved credentials and token.
- */
 async function getOAuth2Client() {
   const credentialsPath = path.join(__dirname, "../config/gmail_cred.json");
   const tokenPath = path.join(__dirname, "../config/gmail_token.json");
@@ -22,24 +19,49 @@ async function getOAuth2Client() {
 }
 
 /**
- * Create RFC2822-encoded base64 message.
+ * Encode subject line for proper UTF-8 handling with emojis or non-ASCII characters.
+ */
+function encodeSubject(subject: string): string {
+  const encoded = Buffer.from(subject, "utf8").toString("base64");
+  return `=?utf-8?B?${encoded}?=`;
+}
+
+/**
+ * Create base64 RFC2822 formatted email.
  */
 function createEmail(to: string, subject: string, message: string): string {
   const emailLines = [
     `To: ${to}`,
     "Content-Type: text/plain; charset=utf-8",
     "MIME-Version: 1.0",
-    `Subject: ${subject}`,
+    `Subject: ${encodeSubject(subject)}`,
     "",
     message,
   ];
 
   const email = emailLines.join("\n");
-  return Buffer.from(email).toString("base64").replace(/\+/g, "-").replace(/\//g, "_");
+  return Buffer.from(email).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 /**
- * Send a wedding invitation to one email address.
+ * Load and fill the invitation message template.
+ */
+async function loadInvitationMessage(
+  partner1: string,
+  partner2: string,
+  weddingDate: string
+): Promise<string> {
+  const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
+  let content = await fs.readFile(templatePath, "utf8");
+
+  return content
+    .replace(/{{partner1}}/g, partner1)
+    .replace(/{{partner2}}/g, partner2)
+    .replace(/{{weddingDate}}/g, weddingDate);
+}
+
+/**
+ * Send a wedding invitation to a single guest.
  */
 export async function sendInvitationEmail(
   to: string,
@@ -50,18 +72,8 @@ export async function sendInvitationEmail(
   const auth = await getOAuth2Client();
   const gmail = google.gmail({ version: 'v1', auth });
 
-  const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
-
-  const message = `Dear Guest,
-
-You're warmly invited to celebrate the wedding of ${partner1} and ${partner2} 💕
-The special day will be on: ${weddingDate}.
-
-Please RSVP at your earliest convenience. We can’t wait to celebrate with you!
-
-With love,
-${partner1} & ${partner2}`;
-
+  const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
+  const message = await loadInvitationMessage(partner1, partner2, weddingDate);
   const raw = createEmail(to, subject, message);
 
   await gmail.users.messages.send({
@@ -71,7 +83,7 @@ ${partner1} & ${partner2}`;
 }
 
 /**
- * Send wedding invitations to multiple recipients.
+ * Send wedding invitations to multiple guests.
  */
 export async function sendInvitationEmails(
   recipients: string[],
@@ -83,16 +95,7 @@ export async function sendInvitationEmails(
   const gmail = google.gmail({ version: 'v1', auth });
 
   const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
-
-  const message = `Dear Guest,
-
-You're warmly invited to celebrate the wedding of ${partner1} and ${partner2} 💕
-The special day will be on: ${weddingDate}.
-
-Please RSVP at your earliest convenience. We can’t wait to celebrate with you!
-
-With love,
-${partner1} & ${partner2}`;
+  const message = await loadInvitationMessage(partner1, partner2, weddingDate);
 
   for (const to of recipients) {
     const raw = createEmail(to, subject, message);
