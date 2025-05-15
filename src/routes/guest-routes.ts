@@ -14,5 +14,6 @@ router.delete('/guests/:id',    authMiddleware, guestsController.deleteItem.bind
 
 // POST /guests
 router.post(  '/guests',        authMiddleware, guestsController.create);
+router.post(  '/guests/send-invitation', authMiddleware, guestsController.sendInvitation);
 
 export default router;
