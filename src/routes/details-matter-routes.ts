@@ -1,5 +1,5 @@
 import express from "express";
-import { suggestSongs } from "../controllers/details_matter.controller";
+import { suggestSongs } from "../controllers/details-matter-controller";
 import { authMiddleware } from "../controllers/auth_controller";
 
 const router = express.Router();

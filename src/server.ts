@@ -3,8 +3,6 @@ dotenv.config();
 
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
-import path from "path";
-import dotenv from "dotenv";
 import path from 'path';
 import mongoose from "mongoose";
 
@@ -49,7 +47,7 @@ app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 // app.use(apiBase, budgetRoutes);
 app.use(apiBase, detailsMatterRoutes);
-app.use(apiBase, vendorsRoute);
+app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 
@@ -68,11 +66,6 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-
-// app.listen(PORT, () => {
-// console.log(`Server running on http://localhost:${PORT}`);
-// });
-
 const initApp = async () => {
   return new Promise<Express>((resolve, reject) => {
     const db = mongoose.connection;
@@ -84,7 +77,6 @@ const initApp = async () => {
     });
 
     if (process.env.MONGO_URI === undefined) {
-      //console.error("MONGO_URI is not set");
       reject();
     } else {
       mongoose.connect(process.env.MONGO_URI).then(() => {
