@@ -35,6 +35,7 @@ app.use((req, res, next) => {
 
 // Static files
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+app.use('/static', express.static(path.join(__dirname, './static')));
 
 // API routes
 app.use("/api/budget", budgetRoutes);
@@ -42,7 +43,7 @@ app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, detailsMatterRoutes);
 app.use(apiBase, vendorsRoute);
-app.use(apiBase, guestRoutes); // includes /api/rsvp
+app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 
 // Root route
