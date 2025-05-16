@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import guestModel, { IGuest } from '../models/guest-model';
 import { BaseController } from './base-controller';
 import { AuthRequest } from '../common/auth-middleware';
-import { sendInvitationEmails } from '../services/gmail-service.ts';
+import { sendInvitationEmails } from '../services/gmail-service';
 
 class GuestsController extends BaseController<IGuest> {
   constructor() {
