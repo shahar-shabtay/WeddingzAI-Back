@@ -26,14 +26,14 @@ function encodeSubject(subject: string): string {
   return `=?utf-8?B?${encoded}?=`;
 }
 
-function createEmail(to: string, subject: string, message: string): string {
+function createEmail(to: string, subject: string, html: string): string {
   const emailLines = [
     `To: ${to}`,
-    "Content-Type: text/plain; charset=utf-8",
+    "Content-Type: text/html; charset=utf-8",
     "MIME-Version: 1.0",
     `Subject: ${encodeSubject(subject)}`,
     "",
-    message,
+    html,
   ];
 
   const email = emailLines.join("\n");
@@ -53,7 +53,7 @@ async function loadInvitationMessage(
   guestId: string,
   rsvpToken: string
 ): Promise<string> {
-  const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
+  const templatePath = path.join(__dirname, "./email-templates/invitation-template.html");
   let content = await fs.readFile(templatePath, "utf8");
 
   return content
