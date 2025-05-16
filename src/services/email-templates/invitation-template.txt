@@ -1,4 +1,4 @@
-Dear Guest,
+Dear {{guestName}},
 
 ✨ You’re officially invited to a celebration of love! ✨
 
