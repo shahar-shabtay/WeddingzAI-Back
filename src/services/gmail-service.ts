@@ -53,7 +53,7 @@ async function loadInvitationMessage(
   guestId: string,
   rsvpToken: string
 ): Promise<string> {
-  const templatePath = path.join(__dirname, "./email-templates/invitation-template.html");
+  const templatePath = path.join(__dirname, "../templates/invitation-template.html");
   let content = await fs.readFile(templatePath, "utf8");
 
   return content

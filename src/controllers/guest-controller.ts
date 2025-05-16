@@ -4,6 +4,8 @@ import guestModel, { IGuest } from '../models/guest-model';
 import { BaseController } from './base-controller';
 import { AuthRequest } from '../common/auth-middleware';
 import { sendInvitationEmails } from '../services/gmail-service';
+import fs from "fs/promises";
+import path from "path";
 
 class GuestsController extends BaseController<IGuest> {
   constructor() {
@@ -177,21 +179,22 @@ class GuestsController extends BaseController<IGuest> {
       guest.rsvp = response as "yes" | "no" | "maybe";
       await guest.save();
   
-      res.send(`
-        <html>
-          <body style="font-family: sans-serif; text-align: center; margin-top: 100px;">
-            <h1>🎉 RSVP Confirmed</h1>
-            <p>Thank you, ${guest.fullName}! Your RSVP has been recorded as: <strong>${response}</strong>.</p>
-            <p style="margin-top: 30px; color: gray;">
-              You can always change your mind later using the RSVP links in your invitation email.
-            </p>
-          </body>
-        </html>
-      `);
+      const templatePath = path.join(__dirname, "../templates/rsvp-respone.html");
+      let html = await fs.readFile(templatePath, "utf8");
+  
+      html = html
+        .replace(/{{fullName}}/g, guest.fullName)
+        .replace(/{{response}}/g, response as string)
+        .replace(/{{bgImageUrl}}/g, "http://localhost:4000/static/main-bg.png");
+  
+      res.set("Content-Type", "text/html");
+      res.send(html);
     } catch (err) {
+      console.error("RSVP render error:", err);
       res.status(500).send("Something went wrong.");
     }
-  };  
+  };
+  
 }
 
 export default new GuestsController();
