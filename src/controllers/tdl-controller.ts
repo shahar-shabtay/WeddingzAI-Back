@@ -29,6 +29,23 @@ class TDLController extends BaseController<ITDL> {
       this.sendError(res, err);
     }
   };
+
+  getByUser = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const uid = this.getUserId(req);
+      if (!uid) throw new Error("Unauthorized");
+
+      // Find all TDL docs for this user
+      const docs = await tdlModel.find({ userId: uid }).sort({ createdAt: -1 });
+      this.sendSuccess(res, docs, "Fetched your to-do lists");
+    } catch (err: any) {
+      this.sendError(res, err);
+    }
+  };
 }
 
 export default new TDLController();
