@@ -1,7 +1,9 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import guestModel, { IGuest } from '../models/guest-model';
 import { BaseController } from './base-controller';
 import { AuthRequest } from '../common/auth-middleware';
+import { sendInvitationEmails } from '../services/gmail-service';
 
 class GuestsController extends BaseController<IGuest> {
   constructor() {
@@ -23,19 +25,17 @@ class GuestsController extends BaseController<IGuest> {
       const { fullName, email, phone, rsvp } = req.body;
 
       if (!fullName || !email) {
-        res
-          .status(400)
-          .json({ message: 'fullName and email are required' });
+        res.status(400).json({ message: 'fullName and email are required' });
         return;
       }
 
       const existing = await guestModel.findOne({ userId, email });
       if (existing) {
-        res
-          .status(409)
-          .json({ message: 'Guest with this email already exists' });
+        res.status(409).json({ message: 'Guest with this email already exists' });
         return;
       }
+
+      const rsvpToken = crypto.randomBytes(16).toString('hex');
 
       const newGuest = await guestModel.create({
         userId,
@@ -43,6 +43,7 @@ class GuestsController extends BaseController<IGuest> {
         email,
         phone,
         rsvp,
+        rsvpToken,
       });
 
       res.status(201).json({ message: 'Guest created', data: newGuest });
@@ -50,6 +51,147 @@ class GuestsController extends BaseController<IGuest> {
       next(err);
     }
   };
+
+  public update = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const { id } = req.params;
+      const { fullName, email, phone, rsvp } = req.body;
+
+      const updatedGuest = await guestModel.findOneAndUpdate(
+        { _id: id, userId },
+        { fullName, email, phone, rsvp },
+        { new: true }
+      );
+
+      if (!updatedGuest) {
+        res.status(404).json({ message: 'Guest not found' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Guest updated', data: updatedGuest });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public remove = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const { id } = req.params;
+
+      const deleted = await guestModel.findOneAndDelete({ _id: id, userId });
+
+      if (!deleted) {
+        res.status(404).json({ message: 'Guest not found' });
+        return;
+      }
+
+      res.status(200).json({ message: 'Guest deleted', data: deleted });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public sendInvitation = async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+
+      const { partner1, partner2, weddingDate } = req.body;
+
+      if (!partner1 || !partner2 || !weddingDate) {
+        res.status(400).json({ message: 'Missing required fields' });
+        return;
+      }
+
+      const guests = await guestModel.find({ userId });
+
+      const recipients = guests
+        .filter((g) => g.email && g.rsvpToken)
+        .map((g) => ({
+          email: g.email!,
+          fullName: g.fullName,
+          guestId: g._id.toString(),
+          rsvpToken: g.rsvpToken!,
+        }));
+
+      if (recipients.length === 0) {
+        res.status(400).json({ message: 'No guests with valid emails found' });
+        return;
+      }
+
+      await sendInvitationEmails(recipients, partner1, partner2, weddingDate);
+
+      res.status(200).json({ message: 'Invitations sent to all guests' });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  public rsvpResponse = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { guestId, token, response } = req.query;
+  
+      if (!guestId || !token || !response) {
+        res.status(400).send("Missing guestId, token, or response.");
+        return;
+      }
+  
+      if (!["yes", "no", "maybe"].includes(response as string)) {
+        res.status(400).send("Invalid RSVP response.");
+        return;
+      }
+  
+      const guest = await guestModel.findById(guestId);
+      if (!guest || guest.rsvpToken !== token) {
+        res.status(403).send("Invalid token or guest not found.");
+        return;
+      }
+  
+      guest.rsvp = response as "yes" | "no" | "maybe";
+      await guest.save();
+  
+      res.send(`
+        <html>
+          <body style="font-family: sans-serif; text-align: center; margin-top: 100px;">
+            <h1>🎉 RSVP Confirmed</h1>
+            <p>Thank you, ${guest.fullName}! Your RSVP has been recorded as: <strong>${response}</strong>.</p>
+            <p style="margin-top: 30px; color: gray;">
+              You can always change your mind later using the RSVP links in your invitation email.
+            </p>
+          </body>
+        </html>
+      `);
+    } catch (err) {
+      res.status(500).send("Something went wrong.");
+    }
+  };  
 }
 
 export default new GuestsController();

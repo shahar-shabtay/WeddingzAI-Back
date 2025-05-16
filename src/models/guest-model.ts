@@ -6,6 +6,7 @@ export interface IGuest {
   email: string;
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
+  rsvpToken: string;
 }
 
 // Regular expression for email validation
@@ -25,7 +26,6 @@ const guestSchema = new mongoose.Schema<IGuest>({
   email: {
     type: String,
     required: [true, "Email is required"],
-    unique: true,
     trim: true,
     lowercase: true,
     validate: {
@@ -42,8 +42,15 @@ const guestSchema = new mongoose.Schema<IGuest>({
     type: String,
     enum: ["yes", "no", "maybe"],
     default: "maybe"
+  },
+  rsvpToken: {
+    type: String,
+    required: true,
+    unique: true
   }
 });
+
+guestSchema.index({ userId: 1, email: 1 }, { unique: true });
 
 const guestModel = mongoose.model<IGuest>("guests", guestSchema);
 
