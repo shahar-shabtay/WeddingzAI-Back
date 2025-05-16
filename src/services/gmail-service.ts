@@ -21,17 +21,11 @@ async function getOAuth2Client() {
   return oAuth2Client;
 }
 
-/**
- * Encode subject line for proper UTF-8 handling with emojis or non-ASCII characters.
- */
 function encodeSubject(subject: string): string {
   const encoded = Buffer.from(subject, "utf8").toString("base64");
   return `=?utf-8?B?${encoded}?=`;
 }
 
-/**
- * Create base64 RFC2822 formatted email.
- */
 function createEmail(to: string, subject: string, message: string): string {
   const emailLines = [
     `To: ${to}`,
@@ -46,76 +40,86 @@ function createEmail(to: string, subject: string, message: string): string {
   return Buffer.from(email).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-/**
- * Load and fill the invitation message template.
- */
+function createRSVPLink(type: 'yes' | 'no' | 'maybe', guestId: string, token: string): string {
+  const domainBase = process.env.DOMAIN_BASE || "http://localhost:4000";
+  return `${domainBase}/api/rsvp?guestId=${guestId}&token=${token}&response=${type}`;
+}
+
 async function loadInvitationMessage(
-    partner1: string,
-    partner2: string,
-    weddingDate: string,
-    guestName: string
-  ): Promise<string> {
-    const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
-    let content = await fs.readFile(templatePath, "utf8");
-  
-    return content
-      .replace(/{{partner1}}/g, partner1)
-      .replace(/{{partner2}}/g, partner2)
-      .replace(/{{weddingDate}}/g, weddingDate)
-      .replace(/{{guestName}}/g, guestName);
-  }
-  
-/**
- * Send a wedding invitation to a single guest.
- */
+  partner1: string,
+  partner2: string,
+  weddingDate: string,
+  guestName: string,
+  guestId: string,
+  rsvpToken: string
+): Promise<string> {
+  const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
+  let content = await fs.readFile(templatePath, "utf8");
+
+  return content
+    .replace(/{{partner1}}/g, partner1)
+    .replace(/{{partner2}}/g, partner2)
+    .replace(/{{weddingDate}}/g, weddingDate)
+    .replace(/{{guestName}}/g, guestName)
+    .replace(/{{rsvpYesLink}}/g, createRSVPLink('yes', guestId, rsvpToken))
+    .replace(/{{rsvpNoLink}}/g, createRSVPLink('no', guestId, rsvpToken))
+    .replace(/{{rsvpMaybeLink}}/g, createRSVPLink('maybe', guestId, rsvpToken));
+}
+
 export async function sendInvitationEmail(
-    to: string,
-    guestName: string,
-    partner1: string,
-    partner2: string,
-    weddingDate: string
-  ) {
-    const auth = await getOAuth2Client();
-    const gmail = google.gmail({ version: 'v1', auth });
-  
-    const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
-    const message = await loadInvitationMessage(partner1, partner2, weddingDate, guestName);
-    const raw = createEmail(to, subject, message);
-  
+  to: string,
+  guestName: string,
+  guestId: string,
+  rsvpToken: string,
+  partner1: string,
+  partner2: string,
+  weddingDate: string
+) {
+  const auth = await getOAuth2Client();
+  const gmail = google.gmail({ version: 'v1', auth });
+
+  const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
+  const message = await loadInvitationMessage(partner1, partner2, weddingDate, guestName, guestId, rsvpToken);
+  const raw = createEmail(to, subject, message);
+
+  await gmail.users.messages.send({
+    userId: 'me',
+    requestBody: { raw },
+  });
+}
+
+interface GuestInfo {
+  email: string;
+  fullName: string;
+  guestId: string;
+  rsvpToken: string;
+}
+
+export async function sendInvitationEmails(
+  guests: GuestInfo[],
+  partner1: string,
+  partner2: string,
+  weddingDate: string
+) {
+  const auth = await getOAuth2Client();
+  const gmail = google.gmail({ version: 'v1', auth });
+
+  const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
+
+  for (const guest of guests) {
+    const message = await loadInvitationMessage(
+      partner1,
+      partner2,
+      weddingDate,
+      guest.fullName,
+      guest.guestId,
+      guest.rsvpToken
+    );
+    const raw = createEmail(guest.email, subject, message);
+
     await gmail.users.messages.send({
       userId: 'me',
       requestBody: { raw },
     });
   }
-  
-
-/**
- * Send wedding invitations to multiple guests.
- */
-interface GuestInfo {
-    email: string;
-    fullName: string;
-  }
-  
-  export async function sendInvitationEmails(
-    guests: GuestInfo[],
-    partner1: string,
-    partner2: string,
-    weddingDate: string
-  ) {
-    const auth = await getOAuth2Client();
-    const gmail = google.gmail({ version: 'v1', auth });
-  
-    const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
-  
-    for (const guest of guests) {
-      const message = await loadInvitationMessage(partner1, partner2, weddingDate, guest.fullName);
-      const raw = createEmail(guest.email, subject, message);
-  
-      await gmail.users.messages.send({
-        userId: 'me',
-        requestBody: { raw },
-      });
-    }
-  }
-  
+}
