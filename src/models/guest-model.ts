@@ -6,6 +6,7 @@ export interface IGuest {
   email: string;
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
+  rsvpToken: string;
 }
 
 // Regular expression for email validation
@@ -41,6 +42,11 @@ const guestSchema = new mongoose.Schema<IGuest>({
     type: String,
     enum: ["yes", "no", "maybe"],
     default: "maybe"
+  },
+  rsvpToken: {
+    type: String,
+    required: true,
+    unique: true
   }
 });
 
