@@ -219,7 +219,6 @@ const logout = async (req: Request, res: Response) => {
 
 // Refresh Token
 const refresh = async (req: Request, res: Response) => {
-  console.log("refresh");
   const refreshToken = req.body.refreshToken;
   if (!refreshToken) {
     res.status(400).send({ message: "Missing Token" });
@@ -294,8 +293,8 @@ const updateUser = async (req: Request, res: Response) => {
     }
 
     const userEmail = await userModel.findOne({ email: email });
-    if (userEmail) {
-      res.status(401).send({ message: "Email already taken" });
+    if (userEmail && userEmail._id.toString() !== userId) {
+      res.status(404).send({ message: "Email already taken" });
       return;
     }
 
@@ -340,9 +339,12 @@ export const authMiddleware = (
 
   jwt.verify(accessToken, process.env.TOKEN_SECRET, (err, data) => {
     if (err) {
-      res.status(401).send({ message: "Access Denied" });
-      console.log("Token Expired, Refresh!");
-      return;
+      if (err.name === "TokenExpiredError") {
+        console.log("Access token expired");
+        return res.status(401).send({ message: "Token Expired" });
+      }
+      console.log("Invalid token:", err.message);
+      return res.status(403).send({ message: "Invalid Token" });
     }
     req.params.userId = (data as TokenPayload)._id;
     next();
