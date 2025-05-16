@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "prod": "cp .env.prod .env && npx tsc && node ./dist/app.js",
     "dev": "cp .env.dev .env && nodemon ./src/app.ts",
     "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand"
   },
