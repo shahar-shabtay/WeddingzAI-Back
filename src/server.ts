@@ -4,8 +4,6 @@ dotenv.config();
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from "path";
-import dotenv from "dotenv";
-import path from 'path';
 import mongoose from "mongoose";
 
 // Import routes

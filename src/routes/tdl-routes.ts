@@ -32,4 +32,6 @@ router.delete("/tdl/:id", authMiddleware, (req, res) =>
   tdlController.deleteItem(req, res)
 );
 
+router.get("/tdl/user/:id", authMiddleware,tdlController.getByUser);
+
 export default router;
