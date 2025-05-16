@@ -50,61 +50,72 @@ function createEmail(to: string, subject: string, message: string): string {
  * Load and fill the invitation message template.
  */
 async function loadInvitationMessage(
-  partner1: string,
-  partner2: string,
-  weddingDate: string
-): Promise<string> {
-  const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
-  let content = await fs.readFile(templatePath, "utf8");
-
-  return content
-    .replace(/{{partner1}}/g, partner1)
-    .replace(/{{partner2}}/g, partner2)
-    .replace(/{{weddingDate}}/g, weddingDate);
-}
-
+    partner1: string,
+    partner2: string,
+    weddingDate: string,
+    guestName: string
+  ): Promise<string> {
+    const templatePath = path.join(__dirname, "./email-templates/invitation-template.txt");
+    let content = await fs.readFile(templatePath, "utf8");
+  
+    return content
+      .replace(/{{partner1}}/g, partner1)
+      .replace(/{{partner2}}/g, partner2)
+      .replace(/{{weddingDate}}/g, weddingDate)
+      .replace(/{{guestName}}/g, guestName);
+  }
+  
 /**
  * Send a wedding invitation to a single guest.
  */
 export async function sendInvitationEmail(
-  to: string,
-  partner1: string,
-  partner2: string,
-  weddingDate: string
-) {
-  const auth = await getOAuth2Client();
-  const gmail = google.gmail({ version: 'v1', auth });
-
-  const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
-  const message = await loadInvitationMessage(partner1, partner2, weddingDate);
-  const raw = createEmail(to, subject, message);
-
-  await gmail.users.messages.send({
-    userId: 'me',
-    requestBody: { raw },
-  });
-}
-
-/**
- * Send wedding invitations to multiple guests.
- */
-export async function sendInvitationEmails(
-  recipients: string[],
-  partner1: string,
-  partner2: string,
-  weddingDate: string
-) {
-  const auth = await getOAuth2Client();
-  const gmail = google.gmail({ version: 'v1', auth });
-
-  const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
-  const message = await loadInvitationMessage(partner1, partner2, weddingDate);
-
-  for (const to of recipients) {
+    to: string,
+    guestName: string,
+    partner1: string,
+    partner2: string,
+    weddingDate: string
+  ) {
+    const auth = await getOAuth2Client();
+    const gmail = google.gmail({ version: 'v1', auth });
+  
+    const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
+    const message = await loadInvitationMessage(partner1, partner2, weddingDate, guestName);
     const raw = createEmail(to, subject, message);
+  
     await gmail.users.messages.send({
       userId: 'me',
       requestBody: { raw },
     });
   }
-}
+  
+
+/**
+ * Send wedding invitations to multiple guests.
+ */
+interface GuestInfo {
+    email: string;
+    fullName: string;
+  }
+  
+  export async function sendInvitationEmails(
+    guests: GuestInfo[],
+    partner1: string,
+    partner2: string,
+    weddingDate: string
+  ) {
+    const auth = await getOAuth2Client();
+    const gmail = google.gmail({ version: 'v1', auth });
+  
+    const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
+  
+    for (const guest of guests) {
+      const message = await loadInvitationMessage(partner1, partner2, weddingDate, guest.fullName);
+      const raw = createEmail(guest.email, subject, message);
+  
+      await gmail.users.messages.send({
+        userId: 'me',
+        requestBody: { raw },
+      });
+    }
+  }
+  
