@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>RSVP Confirmed</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-image: url('{{bgImageUrl}}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
+        text-shadow: 0 0 5px black;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        font-size: 1.25rem;
+        max-width: 600px;
+        margin: 0 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎉 RSVP Confirmed</h1>
+    <p>
+      Thank you, {{fullName}}! Your RSVP has been recorded as:
+      <strong>{{response}}</strong>.
+    </p>
+    <p style="margin-top: 30px;">
+      You can always change your mind later using the RSVP links in your invitation email.
+    </p>
+  </body>
+</html>
