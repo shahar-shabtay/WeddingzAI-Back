@@ -11,7 +11,7 @@ export const VENDOR_TYPES: VendorType[] = [
     // DJ Details
   {
     name: "DJ",
-    keywords: ["dj", "music", "playlist", "entertainment", "performance", "song"],
+    keywords: ["dj", "music", "playlist", "entertainment", "performance", "song", "band"],
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/מוסיקה.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
@@ -141,7 +141,7 @@ export const VENDOR_TYPES: VendorType[] = [
   {
         // Venues
     name: "Venues",
-    keywords: ["venue", "hall"],
+    keywords: ["venue", "hall","venue"],
     listingUrl: "https://urbanbridesmag.co.il/מקום-לאירוע.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
