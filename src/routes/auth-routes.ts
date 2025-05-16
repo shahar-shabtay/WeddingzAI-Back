@@ -16,4 +16,6 @@ router.put("/auth/user", authMiddleware, authController.updateUser);
 
 router.post("/auth/google", authController.googleSignIn);
 
+router.put("/auth/resetpass", authMiddleware, authController.updatePassword);
+
 export default router;
