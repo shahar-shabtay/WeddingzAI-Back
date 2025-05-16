@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 // Import routes
 import tdlRoutes from "./routes/tdl-routes";
-import authRoutes from "./routes/auth_routes";
+import authRoutes from "./routes/auth-routes";
 // import budgetRoutes from "./routes/budget.routes";
 import guestRoutes from "./routes/guest-routes";
 import detailsMatterRoutes from "./routes/details-matter-routes";
