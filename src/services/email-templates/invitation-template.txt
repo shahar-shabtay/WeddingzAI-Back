@@ -1,0 +1,18 @@
+Dear Guest,
+
+✨ You’re officially invited to a celebration of love! ✨
+
+Gal and Romi are tying the knot, and we would be honored to have you join us
+on their special day — {{weddingDate}}.
+
+It’s going to be a magical event filled with joy, laughter, and unforgettable moments.
+
+💍 Ceremony & Celebration
+📅 Date: {{weddingDate}}
+👰‍♀️ Couple: {{partner1}} & {{partner2}}
+
+Please save the date and keep an eye out for more details soon.
+We can’t wait to celebrate with you.
+
+With all our love,
+{{partner1}} & {{partner2}}

@@ -24,11 +24,10 @@ export const getSongSuggestions = async (prompt: string): Promise<SongSuggestion
     { prompt },
     {
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     }
   );
-
+  
   return response.data;
 }; 
