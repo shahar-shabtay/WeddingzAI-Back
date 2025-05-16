@@ -157,38 +157,41 @@ class GuestsController extends BaseController<IGuest> {
   public rsvpResponse = async (req: Request, res: Response): Promise<void> => {
     try {
       const { guestId, token, response } = req.query;
-
+  
       if (!guestId || !token || !response) {
         res.status(400).send("Missing guestId, token, or response.");
         return;
       }
-
+  
       if (!["yes", "no", "maybe"].includes(response as string)) {
         res.status(400).send("Invalid RSVP response.");
         return;
       }
-
+  
       const guest = await guestModel.findById(guestId);
       if (!guest || guest.rsvpToken !== token) {
         res.status(403).send("Invalid token or guest not found.");
         return;
       }
-
+  
       guest.rsvp = response as "yes" | "no" | "maybe";
       await guest.save();
-
+  
       res.send(`
         <html>
           <body style="font-family: sans-serif; text-align: center; margin-top: 100px;">
             <h1>🎉 RSVP Confirmed</h1>
             <p>Thank you, ${guest.fullName}! Your RSVP has been recorded as: <strong>${response}</strong>.</p>
+            <p style="margin-top: 30px; color: gray;">
+              You can always change your mind later using the RSVP links in your invitation email.
+            </p>
           </body>
         </html>
       `);
     } catch (err) {
       res.status(500).send("Something went wrong.");
     }
-  };
+  };  
 }
 
 export default new GuestsController();
