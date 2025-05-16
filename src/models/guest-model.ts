@@ -25,7 +25,6 @@ const guestSchema = new mongoose.Schema<IGuest>({
   email: {
     type: String,
     required: [true, "Email is required"],
-    unique: true,
     trim: true,
     lowercase: true,
     validate: {
@@ -44,6 +43,8 @@ const guestSchema = new mongoose.Schema<IGuest>({
     default: "maybe"
   }
 });
+
+guestSchema.index({ userId: 1, email: 1 }, { unique: true });
 
 const guestModel = mongoose.model<IGuest>("guests", guestSchema);
 
