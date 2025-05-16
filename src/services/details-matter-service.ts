@@ -29,6 +29,5 @@ export const getSongSuggestions = async (prompt: string): Promise<SongSuggestion
       }
     }
   );
-
   return response.data;
 }; 

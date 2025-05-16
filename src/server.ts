@@ -4,32 +4,27 @@ dotenv.config();
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from 'path';
+
 import mongoose from "mongoose";
 
-// Import routes
+// Routes
 import tdlRoutes from "./routes/tdl-routes";
-import authRoutes from "./routes/auth_routes";
-// import budgetRoutes from "./routes/budget.routes";
+import authRoutes from "./routes/auth-routes";
 import guestRoutes from "./routes/guest-routes";
 import detailsMatterRoutes from "./routes/details-matter-routes";
 import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
 
-
-// const app: Application = express();
 const app = express();
-
-
 const apiBase = "/api";
 
-// CORS Configuration to allow specific origin
+// CORS
 const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-// App Options
 app.use(express.json());
 app.use(cors(corsOptions));
 app.use((req, res, next) => {
@@ -39,20 +34,19 @@ app.use((req, res, next) => {
   next();
 });
 
-
+// Static files
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
-// Routes
+
+// API routes
 app.use("/api/budget", budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
-// app.use(apiBase, budgetRoutes);
 app.use(apiBase, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 
-
-// Add GET / route for project owners
+// Root route
 app.get("/", (req: Request, res: Response) => {
   res.json({
     owners: [
@@ -84,6 +78,7 @@ const initApp = async () => {
         resolve(app);
       });
     }
+
   });
 };
 
