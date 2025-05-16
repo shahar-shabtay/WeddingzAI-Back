@@ -31,8 +31,8 @@ You are an expert wedding planner. Based on the couple's wedding preferences, ge
 
     {
     "weddingTodoListName": string,
-    "bride": string,
-    "groom": string,
+    "firstPartner": string,
+    "secondPartner": string,
     "weddingDate": string,
     "estimatedBudget": string,
     "sections": [
