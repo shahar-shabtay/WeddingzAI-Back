@@ -16,7 +16,7 @@ class InvitationController extends BaseController<IInvitation> {
 
   async createInvitation(req: AuthRequest, res: Response): Promise<void> {
     const prompt = req.body.prompt;
-    const userId = this.getUserId(req);
+    const userId = req.user?._id;
   
     if (!prompt || !userId) {
       this.sendError(res, "Missing prompt or user ID", 400);
