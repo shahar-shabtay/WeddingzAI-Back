@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userModel from "../models/user_model";
+import { AuthRequest } from "../common/auth-middleware";
 import { OAuth2Client } from "google-auth-library";
 
 // Google SignIn
@@ -281,19 +282,19 @@ const refresh = async (req: Request, res: Response) => {
 };
 
 // Update User
-const updateUser = async (req: Request, res: Response) => {
-    const { userId } = req.params;
+const updateUser = async (req: AuthRequest, res: Response) => {
+    const { _id } = req.user as { _id: string };
     const { email, firstPartner, secondPartner, avatar } = req.body;
 
     try {
-        const user = await userModel.findById(userId);
+        const user = await userModel.findById(_id);
         if (!user) {
             res.status(404).send({ message: "User not found" });
             return;
         }
 
         const userEmail = await userModel.findOne({ email: email });
-        if (userEmail && userEmail._id.toString() !== userId) {
+        if (userEmail && userEmail._id.toString() !== _id) {
             res.status(404).send({ message: "Email already taken" });
             return;
         }
@@ -316,12 +317,12 @@ const updateUser = async (req: Request, res: Response) => {
 };
 
 // Update Password
-const updatePassword = async (req: Request, res: Response) => {
-    const { userId } = req.params;
+const updatePassword = async (req: AuthRequest, res: Response) => {
+    const { _id } = req.user as { _id: string };
     const { newPassword } = req.body;
 
     try {
-        const user = await userModel.findById(userId);
+        const user = await userModel.findById(_id);
         if (!user) {
             res.status(404).send({ message: "User not found" });
             return;
@@ -343,7 +344,7 @@ type TokenPayload = {
     _id: string;
 };
 
-export const authMiddleware = (
+const authMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction
