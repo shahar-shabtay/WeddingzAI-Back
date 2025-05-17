@@ -14,49 +14,51 @@ class InvitationController extends BaseController<IInvitation> {
     super(Invitation);
   }
 
-  async createInvitation(req: AuthRequest, res: Response) {
+  async createInvitation(req: AuthRequest, res: Response): Promise<void> {
     const prompt = req.body.prompt;
     const userId = this.getUserId(req);
-
+  
     if (!prompt || !userId) {
-      return this.sendError(res, "Missing prompt or user ID", 400);
+      this.sendError(res, "Missing prompt or user ID", 400);
+      return;
     }
-
+  
     try {
       console.log("🎨 Generating invitation with prompt:", prompt);
-
+  
       const response = await api.images.generate({
         model: "dall-e-3",
         prompt,
         n: 1,
         size: "1024x1024",
       });
-
+  
       const imageUrl = response.data?.[0]?.url;
-
+  
       if (!imageUrl) {
         console.error("❌ No image URL returned from DALL·E");
-        return this.sendError(res, "Image generation failed", 500);
+        this.sendError(res, "Image generation failed", 500);
+        return;
       }
-
+  
       const savedInvitation = await this.model.create({
         userId,
         prompt,
         imageUrl,
       });
-
+  
       console.log("✅ Invitation saved:", savedInvitation);
-      return this.sendSuccess(res, savedInvitation, "Invitation created");
+      this.sendSuccess(res, savedInvitation, "Invitation created");
     } catch (error) {
       console.error("❌ Error generating invitation:", error);
-
+  
       if (error instanceof RateLimitError) {
-        return this.sendError(res, "Rate limit exceeded", 429);
+        this.sendError(res, "Rate limit exceeded", 429);
+        return;
       }
-
-      return this.sendError(res, error, 500);
+  
+      this.sendError(res, error, 500);
     }
   }
-}
-
+}  
 export default new InvitationController();
