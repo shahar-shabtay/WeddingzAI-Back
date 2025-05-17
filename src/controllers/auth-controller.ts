@@ -240,7 +240,7 @@ const refresh = async (req: Request, res: Response) => {
                 return;
             }
 
-            const payload = data as TokenPayload;
+            const payload = data as TokenPayload;            
             try {
                 const user = await userModel.findOne({ _id: payload._id });
                 if (!user) {
@@ -251,7 +251,7 @@ const refresh = async (req: Request, res: Response) => {
                 if (!user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
                     user.refreshTokens = [];
                     await user.save();
-                    res.status(400).send({ message: "Invalid Token" });
+                    res.status(400).send({ message: "Invalid Tokens in User" });
                     return;
                 }
 
@@ -275,6 +275,7 @@ const refresh = async (req: Request, res: Response) => {
                     _id: user._id,
                 });
             } catch (error) {
+                console.error("Error refreshing token:", error);
                 res.status(400).send({ message: "Invalid Token" });
             }
         }
