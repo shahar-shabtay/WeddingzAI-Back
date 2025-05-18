@@ -19,4 +19,6 @@ router.post("/auth/google", authController.googleSignIn);
 
 router.put("/auth/resetpass", authMiddleware, authController.updatePassword);
 
+router.get("/auth/prem", authMiddleware, authController.getUserPremiumStatus);
+
 export default router;

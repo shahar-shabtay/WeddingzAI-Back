@@ -240,7 +240,7 @@ const refresh = async (req: Request, res: Response) => {
                 return;
             }
 
-            const payload = data as TokenPayload;            
+            const payload = data as TokenPayload;
             try {
                 const user = await userModel.findOne({ _id: payload._id });
                 if (!user) {
@@ -341,10 +341,38 @@ const updatePassword = async (req: AuthRequest, res: Response) => {
     }
 };
 
+// Update Password
+const getUserPremiumStatus = async (req: AuthRequest, res: Response) => {
+    const { _id } = req.user as { _id: string };
+
+    try {
+        const user = await userModel.findById(_id);
+        if (!user) {
+            res.status(404).send({ message: "User not found" });
+            return;
+        }
+        if (user.is_premium) {
+            res.status(200).send({
+                message: "User is premium",
+                is_premium: true
+            });
+            return;
+        }
+        res.status(200).send({
+            message: "User is not premium",
+            is_premium: false
+        });
+    }
+    catch (error) {
+        res.status(500).send({ message: "Server error", error });
+    }
+};
+
 type TokenPayload = {
     _id: string;
 };
 
+// Old auth middleware
 const authMiddleware = (
     req: Request,
     res: Response,
@@ -384,5 +412,6 @@ export default {
     refresh,
     updateUser,
     googleSignIn,
-    updatePassword
+    updatePassword,
+    getUserPremiumStatus
 };

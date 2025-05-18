@@ -8,6 +8,7 @@ export interface IUser {
   refreshTokens?: string[],
   _id?: string;
   avatar?: string;
+  is_premium?: boolean;
 }
 
 // Regular expression for email validation
@@ -45,6 +46,10 @@ const userSchema = new mongoose.Schema<IUser>({
   },
   avatar: {
     type: String
+  },
+  is_premium: {
+    type: Boolean,
+    default: false
   }
 });
 
