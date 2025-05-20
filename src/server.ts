@@ -39,7 +39,7 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use('/static', express.static(path.join(__dirname, './static')));
 
 // API routes
-app.use("/api/budget", budgetRoutes);
+app.use(`${apiBase}/budget`, budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, detailsMatterRoutes);
