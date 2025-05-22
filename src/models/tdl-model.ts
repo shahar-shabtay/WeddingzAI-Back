@@ -1,26 +1,50 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
+
+const todoSchema = new Schema({
+  task: { type: String, required: true },
+  dueDate: { type: String },
+  priority: { type: String },
+  aiSent: { type: Boolean, default: false }
+}, { _id: false });
+
+const sectionSchema = new Schema({
+  sectionName: { type: String },
+  todos: [todoSchema]
+}, { _id: false });
+
+const tdlSchema = new Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  tdl: {
+    weddingTodoListName: String,
+    firstPartner: String,
+    secondPartner: String,
+    weddingDate: String,
+    estimatedBudget: String,
+    sections: [sectionSchema]
+  }
+}, { timestamps: true });
 
 export interface ITDL extends Document {
-  userId: Types.ObjectId;
-  tdl: any;
+  userId: mongoose.Types.ObjectId;
+  tdl: {
+    weddingTodoListName: string;
+    firstPartner: string;
+    secondPartner: string;
+    weddingDate: string;
+    estimatedBudget: string;
+    sections: Array<{
+      sectionName: string;
+      todos: Array<{
+        task: string;
+        dueDate: string;
+        priority: string;
+        aiSent: boolean;
+      }>
+    }>
+  };
   createdAt: Date;
+  updatedAt: Date;
 }
 
-const tdlSchema = new Schema<ITDL>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "users",
-    required: true,
-  },
-  tdl: {
-    type: Schema.Types.Mixed,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-const tdlModel = mongoose.model<ITDL>("tdls", tdlSchema);
+const tdlModel = mongoose.model<ITDL>("TDL", tdlSchema);
 export default tdlModel;

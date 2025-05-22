@@ -4,6 +4,7 @@ dotenv.config();
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from 'path';
+import "./queue/Vendors-Queue";
 
 import mongoose from "mongoose";
 
