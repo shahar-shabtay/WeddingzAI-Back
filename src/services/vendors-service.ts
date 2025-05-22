@@ -3,6 +3,13 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { VendorType, VENDOR_TYPES } from "../config/vendors-types";
 import { VendorModel, IVendor } from "../models/vendor-model";
+import tdlModel from "../models/tdl-model";
+import openai from "../common/openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // or "gemini-1.0-pro", etc.
+
 
 export interface VendorResearchResult {
   vendorType: string;
@@ -24,13 +31,10 @@ export class VendorService {
     this.firecrawlApp = new FirecrawlApp({ apiKey, apiUrl });
   }
 
-  /**
-   * Analyze the user query to determine which vendor type they're looking for
-   */
+  // Analyze the user query to determine which vendor type they're looking for
   analyzeVendorType(userInput: string): VendorType | null {
     const normalizedInput = userInput.toLowerCase();
     
-    // Sort vendor types by match score (number of matching keywords)
     const results = VENDOR_TYPES.map(vendorType => {
       const matchScore = vendorType.keywords.reduce((score, keyword) => {
         if (normalizedInput.includes(keyword.toLowerCase())) {
@@ -45,27 +49,21 @@ export class VendorService {
       };
     }).sort((a, b) => b.matchScore - a.matchScore);
     
-    // Return the vendor type with the highest match score, if any keywords matched
     if (results.length > 0 && results[0].matchScore > 0) {
       return results[0].vendorType;
     }
     
-    // Default to null if no vendor type matched
     return null;
   }
 
-  /**
-   * Find vendor URLs from a listing page
-   */
+  //  Find vendor URLs from a listing page
   async findVendorUrls(vendorType: VendorType): Promise<string[]> {
-    // Ensure we have a valid firecrawlApp instance
     if (!this.firecrawlApp) {
       const apiKey = process.env.FIRECRAWL_API_KEY!;
       const apiUrl = process.env.FIRECRAWL_API_URL!;
       this.firecrawlApp = new FirecrawlApp({ apiKey, apiUrl });
     }
     
-    // Replace template variables in the extract prompt
     const prompt = vendorType.extractPrompt.replace(
       "{{listingUrl}}", 
       vendorType.listingUrl
@@ -75,7 +73,6 @@ export class VendorService {
     try {
       result = await this.firecrawlApp.extract([vendorType.listingUrl], { prompt });
     } catch (err: any) {
-      // on 402, bail out with empty
       if (err.statusCode === 402) {
         console.warn(`[VendorService] Firecrawl 402 on ${vendorType.listingUrl}, returning []`);
         return [];
@@ -96,25 +93,19 @@ export class VendorService {
     return data0.urls;
   }
 
-  /**
-   * Scrape a vendor's details and save to the database
-   */
+  // Scrape a vendor's details and save to the database
   async scrapeAndSaveVendor(pageUrl: string, vendorType: VendorType): Promise<IVendor> {
-    // Check if this vendor URL has already been scraped
     const existing = await VendorModel.findOne({ sourceUrl: pageUrl }).exec();
     if (existing) {
-      console.log(`[VendorService] Skip, already scraped: ${pageUrl}`);
       return existing;
     }
 
-    // Ensure we have a valid firecrawlApp instance
     if (!this.firecrawlApp) {
       const apiKey = process.env.FIRECRAWL_API_KEY!;
       const apiUrl = process.env.FIRECRAWL_API_URL!;
       this.firecrawlApp = new FirecrawlApp({ apiKey, apiUrl });
     }
 
-    // Replace template variables in the scrape prompt
     const prompt = vendorType.scrapePrompt.replace(
       /\{\{pageUrl\}\}/g, 
       pageUrl
@@ -136,14 +127,10 @@ export class VendorService {
       throw new Error("Firecrawl extract failed: " + result.error);
     }
 
-    // Process the raw scraped data
     const raw = Array.isArray(result.data)
       ? result.data[0]
       : result.data;
 
-    console.log("🔍 Raw Firecrawl output:", JSON.stringify(raw, null, 2));
-
-    // Map the scraped data to our generic vendor model
     const doc: Partial<IVendor> = {
       name: raw.name || "",
       vendorType: vendorType.name,
@@ -182,7 +169,6 @@ export class VendorService {
       details: raw.details || [],
     };
 
-    // Save to the database using our generic vendor model
     const saved = await VendorModel.findOneAndUpdate(
       { sourceUrl: pageUrl },
       doc,
@@ -195,12 +181,9 @@ export class VendorService {
     return saved;
   }
 
-  /**
-   * Process the entire vendor research workflow
-   */
-  async processVendorResearch(userQuery: string): Promise<VendorResearchResult> {
+  // Process the entire vendor research workflow
+  async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
     try {
-      // 1. Analyze the query to determine vendor type
       console.log(`[VendorService] Analyzing query: "${userQuery}"`);
       const vendorType = this.analyzeVendorType(userQuery);
       
@@ -214,9 +197,51 @@ export class VendorService {
       }
       
       console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
-      
-      // 2. Find vendor URLs from the listing page
-      console.log(`[VendorService] Finding ${vendorType.name} URLs from ${vendorType.listingUrl}`);
+
+      try {
+        const tdlDoc = await tdlModel.findOne({ userId });
+        if (!tdlDoc || !tdlDoc.tdl || !Array.isArray(tdlDoc.tdl.sections)) {
+          console.warn(`[VendorService] No TDL found for userId=${userId}`);
+        } else {
+          let updated = false;
+
+          for (const section of tdlDoc.tdl.sections) {
+            console.log(`[VendorService] Checking section: ${section.sectionName}`);
+            for (const todo of section.todos) {
+              const normalized = todo.task.toLowerCase();
+              const matchQuery = userQuery.toLowerCase();
+              const matchVendor = vendorType.name.toLowerCase();
+
+              if (
+                normalized.includes(matchQuery) ||
+                normalized.includes(matchVendor)
+              ) {
+                console.log(`[VendorService] Matched task: "${todo.task}"`);
+
+                if (!todo.aiSent) {
+                  todo.aiSent = true;
+                  updated = true;
+                  console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
+                  break; // ✅ Stop after first match
+                } else {
+                  console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
+                }
+              }
+            }
+            if (updated) break;
+          }
+
+          if (updated) {
+            tdlDoc.markModified("tdl.sections"); // ✅ optional but safe
+            await tdlDoc.save();
+            console.log(`[VendorService] TDL document saved successfully`);
+          } else {
+            console.log(`[VendorService] No matching task updated for query "${userQuery}"`);
+          }
+        }
+      } catch (err) {
+        console.error(`[VendorService] Error updating aiSent field in TDL:`, err);
+      }
       const vendorUrls = await this.findVendorUrls(vendorType);
       
       if (vendorUrls.length === 0) {
@@ -227,20 +252,15 @@ export class VendorService {
           error: `No ${vendorType.name} vendors found at the listing URL.`
         };
       }
-      
-      console.log(`[VendorService] Found ${vendorUrls.length} ${vendorType.name} URLs`);
-      
-      // 3. Process each vendor URL (with a limit to avoid excessive API usage)
-      const MAX_VENDORS = 5; // Adjust as needed
+            
+      const MAX_VENDORS = 1000;
       const vendorsToProcess = vendorUrls.slice(0, MAX_VENDORS);
       
       const scrapedVendors = [];
       for (const url of vendorsToProcess) {
         try {
-          console.log(`[VendorService] Scraping ${vendorType.name} at ${url}`);
           const vendor = await this.scrapeAndSaveVendor(url, vendorType);
           
-          // Safely handle the MongoDB ObjectId
           const vendorId = vendor._id ? vendor._id.toString() : vendor.id?.toString() || '';
           
           scrapedVendors.push({
@@ -250,10 +270,11 @@ export class VendorService {
           });
         } catch (err) {
           console.error(`[VendorService] Error scraping ${url}:`, err);
-          // Continue with the next URL even if one fails
         }
       }
-      
+            // Update the matching task in the user's TDL to mark it as aiSent=true
+     
+    
       return {
         vendorType: vendorType.name,
         urlsFound: vendorUrls.length,
@@ -269,7 +290,76 @@ export class VendorService {
       };
     }
   }
+
+  // AI-based filtering of vendors based on the user's TDL tasks
+  async getRelevantVendorsByTDL(userId: string): Promise<IVendor[]> {
+  const tdl = await tdlModel.findOne({ userId }).lean();
+  if (!tdl || !Array.isArray(tdl.tdl?.sections)) return [];
+
+  const relevantTasks = tdl.tdl.sections
+    .flatMap((s: any) => s.todos)
+    .filter((t: any) => t.aiSent === true);
+
+  const results: IVendor[] = [];
+
+  for (const task of relevantTasks) {
+    const type = this.analyzeVendorType(task.task);
+    if (!type) continue;
+
+    const vendors = await VendorModel.find({ vendorType: type.name });
+    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+    const prompt = `
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+      Return a JSON array of the vendor names that best fit the task.
+
+      ${descriptions}
+    `;
+
+    try {
+      const result = await model.generateContent(prompt);
+      let aiContent = result.response.text().trim();
+
+      if (!aiContent) continue;
+
+      if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
+      if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
+
+      // Skip meaningless response
+      const lowerContent = aiContent.toLowerCase();
+      if (
+        lowerContent.includes("none of the vendors") ||
+        lowerContent.includes("no suitable vendors") ||
+        lowerContent.includes("no vendors matched")
+      ) continue;
+
+      // Attempt to parse JSON
+      let selectedNames: string[] = [];
+      try {
+        const parsed = JSON.parse(aiContent);
+        if (Array.isArray(parsed)) {
+          selectedNames = parsed;
+        } else if (Array.isArray(parsed.vendors)) {
+          selectedNames = parsed.vendors;
+        } else {
+          continue; // Unexpected structure, skip silently
+        }
+      } catch {
+        continue; // JSON parse failed, skip silently
+      }
+
+      if (selectedNames.length === 0) continue;
+
+      const matched = vendors.filter((v) => selectedNames.includes(v.name));
+      results.push(...matched);
+    } catch {
+      continue; // Gemini error (e.g. quota), silently ignore
+    }
+  }
+
+  return results;
 }
 
-// Create a singleton instance for easy importing
+}
+
 export const vendorService = new VendorService();

@@ -42,7 +42,8 @@ You are an expert wedding planner. Based on the couple's wedding preferences, ge
             {
             "task": string,
             "dueDate": string,
-            "priority": string
+            "priority": string,
+            "aiSent": false
             }
         ]
         }
@@ -62,8 +63,22 @@ You are an expert wedding planner. Based on the couple's wedding preferences, ge
   if (text.startsWith("```json")) text = text.replace(/^```json/, "").trim();
   if (text.endsWith("```"))      text = text.replace(/```$/, "").trim();
   return JSON.parse(text);
+
+  
 }
 
+
+// export async function createTdlFromFile(
+//   filePath: string,
+//   userId: string
+// ): Promise<ITDL> {
+//   const raw = await fs.readFile(filePath, "utf8");
+//   const prefs = JSON.parse(raw);
+//   const tdlJson = await generateTodoList(prefs);
+//   const doc = await tdlModel.create({ userId, tdl: tdlJson });
+//   await fs.unlink(filePath).catch(() => {}); // cleanup
+//   return doc;
+// }
 
 export async function createTdlFromFile(
   filePath: string,
@@ -72,7 +87,26 @@ export async function createTdlFromFile(
   const raw = await fs.readFile(filePath, "utf8");
   const prefs = JSON.parse(raw);
   const tdlJson = await generateTodoList(prefs);
-  const doc = await tdlModel.create({ userId, tdl: tdlJson });
+
+  // Normalize structure to match schema
+  const structuredTdl = {
+    weddingTodoListName: tdlJson.weddingTodoListName,
+    firstPartner: tdlJson.firstPartner,
+    secondPartner: tdlJson.secondPartner,
+    weddingDate: tdlJson.weddingDate,
+    estimatedBudget: tdlJson.estimatedBudget,
+    sections: (tdlJson.sections || []).map((section: any) => ({
+      sectionName: section.sectionName,
+      todos: (section.todos || []).map((todo: any) => ({
+        task: todo.task,
+        dueDate: todo.dueDate,
+        priority: todo.priority,
+        aiSent: todo.aiSent ?? false
+      }))
+    }))
+  };
+
+  const doc = await tdlModel.create({ userId, tdl: structuredTdl });
   await fs.unlink(filePath).catch(() => {}); // cleanup
   return doc;
 }
