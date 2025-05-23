@@ -6,24 +6,35 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
+const TOKEN_PATH = process.env.GMAIL_TOKEN_PATH || "./.gmail-token.json";
 
 async function getOAuth2Client() {
+  // 1. Decode and parse credentials
   const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
-  const tokenJSON = Buffer.from(tokenBase64(), 'base64').toString('utf8');
-
-  const credentials = JSON.parse(credJSON).installed;
-  const token = JSON.parse(tokenJSON);
-
+  const credentials = JSON.parse(credJSON).web;
   const { client_id, client_secret, redirect_uris } = credentials;
+
+  // 2. Create OAuth2 client
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
-  oAuth2Client.setCredentials(token);
+  // 3. Load refresh token from .env (Base64-decoded)
+  const refreshToken = Buffer.from(process.env.GMAIL_REFRESH_TOKEN_BASE64!, 'base64').toString('utf8');
+
+  // 4. Set credentials with just the refresh_token
+  oAuth2Client.setCredentials({ refresh_token: refreshToken });
+
+  try {
+    // 5. Force refresh access token immediately
+    const { credentials: newToken } = await oAuth2Client.refreshAccessToken();
+    oAuth2Client.setCredentials(newToken);
+    console.log("Access token refreshed using .env refresh_token");
+  } catch (error) {
+    console.error("Failed to refresh Gmail token using refresh_token from .env", error);
+  }
+
   return oAuth2Client;
 }
 
-function tokenBase64() {
-  return process.env.GMAIL_TOKEN_BASE64!;
-}
 
 function encodeSubject(subject: string): string {
   const encoded = Buffer.from(subject, "utf8").toString("base64");
@@ -93,14 +104,14 @@ export async function sendInvitationEmail(
   venue?: string
 ) {
   const auth = await getOAuth2Client();
-  const gmail = google.gmail({ version: 'v1', auth });
+  const gmail = google.gmail({ version: "v1", auth });
 
   const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
   const message = await loadInvitationMessage(partner1, partner2, guestName, guestId, rsvpToken, weddingDate, venue);
   const raw = createEmail(to, subject, message);
 
   await gmail.users.messages.send({
-    userId: 'me',
+    userId: "me",
     requestBody: { raw },
   });
 }
@@ -120,7 +131,7 @@ export async function sendInvitationEmails(
   venue?: string
 ) {
   const auth = await getOAuth2Client();
-  const gmail = google.gmail({ version: 'v1', auth });
+  const gmail = google.gmail({ version: "v1", auth });
 
   const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
 
@@ -137,7 +148,7 @@ export async function sendInvitationEmails(
     const raw = createEmail(guest.email, subject, message);
 
     await gmail.users.messages.send({
-      userId: 'me',
+      userId: "me",
       requestBody: { raw },
     });
   }
