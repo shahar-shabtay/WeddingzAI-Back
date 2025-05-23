@@ -11,7 +11,7 @@ export interface IUser {
   avatar?: string;
   is_premium?: boolean;
   myVendors: IVendor[];
-  weddingDate?: Date;
+  weddingDate?: string;
   weddingVenue?: string;
 }
 
@@ -61,7 +61,7 @@ const userSchema = new mongoose.Schema<IUser>({
     default: [],
   }],
   weddingDate: {
-    type: Date,
+    type: String,
     required: false
   },
   weddingVenue: {
