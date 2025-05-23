@@ -7,6 +7,7 @@ import { VendorModel, IVendor } from "../models/vendor-model";
 import { vendorService } from "../services/vendors-service";
 import { AuthRequest } from "../common/auth-middleware";
 import vendorQueue from "../queue/Vendors-Queue";
+import userModel from "../models/user-model";
 
 export class VendorController extends BaseController<IVendor> {
   constructor() {
@@ -78,44 +79,71 @@ export class VendorController extends BaseController<IVendor> {
 
   // Get relevant vendors based on user's TDL tasks that were sent to AI
   async getRelevantVendors(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?._id;
-      if (!userId) {
+  try {
+    const userId = req.user?._id;
+    if (!userId) 
+    {
         this.sendError(res, new Error("Unauthorized"), 401);
         return;
-      }
-      const vendors = await vendorService.getRelevantVendorsByTDL(userId.toString());
+    }
 
-      this.sendSuccess(res, vendors, "Filtered vendors based on your TDL tasks");
-      return;
-    } catch (err: any) {
-      console.error("[VendorController] Failed to get relevant vendors:", err);
-      this.sendError(res, err);
+    const user = await userModel.findById(userId).populate("myVendors");
+    if (!user?.myVendors) 
+    {
+      this.sendSuccess(res, [], "No relevant vendors found");
       return;
     }
-  }
 
-  async  getVendorSummary(req: AuthRequest, res: Response): Promise<void>  {
+    this.sendSuccess(res, user.myVendors, "Vendors matched to your TDL tasks");
+  } catch (err: any) {
+    console.error("[VendorController] Failed to get relevant vendors:", err);
+    this.sendError(res, err);
+  }
+}
+
+async getVendorSummary(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?._id;
     if (!userId) {
-      res.status(401).json({ error: "Unauthorized" })
+      res.status(401).json({ error: "Unauthorized" });
       return;
-    };
+    }
 
-    const vendors = await vendorService.getRelevantVendorsByTDL(userId);
+    const user = await userModel.findById(userId).populate("myVendors").lean();
+    if (!user || !user.myVendors || !Array.isArray(user.myVendors)) {
+      res.status(200).json({ total: 0, counts: {} });
+      return;
+    }
 
     const counts: Record<string, number> = {};
-    vendors.forEach(v => {
+    user.myVendors.forEach((v: any) => {
       counts[v.vendorType] = (counts[v.vendorType] || 0) + 1;
     });
 
-    res.status(200).json({ total: vendors.length, counts });
-    return 
+    res.status(200).json({ total: user.myVendors.length, counts });
   } catch (err) {
     console.error("[VendorController] Error in getVendorSummary", err);
     res.status(500).json({ error: "Failed to load vendor summary" });
-    return 
+  }
+}
+
+async getUserVendors(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      this.sendError(res, new Error("Unauthorized"), 401);
+      return;
+    }
+
+    const user = await userModel.findById(userId).populate('myVendors').lean();
+    if (!user || !user.myVendors) {
+      this.sendSuccess(res, [], "No vendors found");
+      return;
+    }
+
+    this.sendSuccess(res, user.myVendors, "Fetched user vendors");
+  } catch (err: any) {
+    this.sendError(res, err, 500);
   }
 }
 

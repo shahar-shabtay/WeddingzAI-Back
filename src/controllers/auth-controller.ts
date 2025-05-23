@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import userModel from "../models/user_model";
+import userModel from "../models/user-model";
 import { AuthRequest } from "../common/auth-middleware";
 import { OAuth2Client } from "google-auth-library";
 

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { IVendor } from "./vendor-model";
 
 export interface IUser {
   firstPartner: string;
@@ -8,6 +9,8 @@ export interface IUser {
   refreshTokens?: string[],
   _id?: string;
   avatar?: string;
+  is_premium?: boolean;
+  myVendors: IVendor[];
 }
 
 // Regular expression for email validation
@@ -45,7 +48,16 @@ const userSchema = new mongoose.Schema<IUser>({
   },
   avatar: {
     type: String
-  }
+  },
+  is_premium: {
+    type: Boolean,
+    default: false
+  },
+  myVendors: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Vendor", // this must match your Vendor model name
+    default: [],
+  }],
 });
 
 const userModel = mongoose.model<IUser>("users", userSchema);
