@@ -24,7 +24,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      const { fullName, email, phone, rsvp } = req.body;
+      const { fullName, email, phone, rsvp, numberOfGuests } = req.body;
 
       if (!fullName || !email) {
         res.status(400).json({ message: 'fullName and email are required' });
@@ -46,6 +46,7 @@ class GuestsController extends BaseController<IGuest> {
         phone,
         rsvp,
         rsvpToken,
+        numberOfGuests,
       });
 
       res.status(201).json({ message: 'Guest created', data: newGuest });
@@ -67,11 +68,11 @@ class GuestsController extends BaseController<IGuest> {
       }
 
       const { id } = req.params;
-      const { fullName, email, phone, rsvp } = req.body;
+      const { fullName, email, phone, rsvp, numberOfGuests } = req.body;
 
       const updatedGuest = await guestModel.findOneAndUpdate(
         { _id: id, userId },
-        { fullName, email, phone, rsvp },
+        { fullName, email, phone, rsvp, numberOfGuests },
         { new: true }
       );
 
