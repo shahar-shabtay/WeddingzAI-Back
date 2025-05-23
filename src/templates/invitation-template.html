@@ -1,31 +1,33 @@
-<p>Dear {{guestName}},</p>
+<div style="font-family: 'Georgia', serif; color: #2c3e50; line-height: 1.6; max-width: 600px; margin: auto; padding: 20px; background-color: #fff8f5; border: 1px solid #ecd9d9; border-radius: 12px;">
+  <p style="font-size: 1.2rem;">Dear {{guestName}},</p>
 
-<p>✨ You’re officially invited to a celebration of love! ✨</p>
+  <p style="font-size: 1.25rem;">✨ We are delighted to invite you to a very special celebration ✨</p>
 
-<p>
-Gal and Romi are tying the knot, and we would be honored to have you join us
-on their special day - <strong>{{weddingDate}}</strong>.
-</p>
+  <p>
+    {{partner1}} & {{partner2}} are getting married, and your presence would mean the world to us.
+    Please join us as we say "I do" on <strong>{{weddingDate}}</strong>.
+  </p>
 
-<p>
-💍 <strong>Ceremony & Celebration</strong><br />
-📅 Date: {{weddingDate}}<br />
-👰‍♀️ Couple: {{partner1}} & {{partner2}}
-</p>
+  <div style="margin: 1.5rem 0; padding: 1rem; background-color: #fdf3f6; border-left: 4px solid #d291ff;">
+    <p style="margin: 0.2rem 0;"><strong>💍 Wedding Celebration</strong></p>
+    <p style="margin: 0.2rem 0;">📅 <strong>Date:</strong> {{weddingDate}}</p>
+    <p style="margin: 0.2rem 0;">💑 <strong>Couple:</strong> {{partner1}} & {{partner2}}</p>
+  </div>
 
-<hr />
+  <p style="font-weight: bold;">Please RSVP and let us know if you'll be able to attend:</p>
 
-<p><strong>💌 Please let us know if you’ll be attending:</strong></p>
+  <div style="margin-top: 1rem;">
+    <a href="{{rsvpYesLink}}" style="padding: 10px 22px; margin: 5px; background-color: #b291ff; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">💖 Yes, I’ll be there</a>
+    <a href="{{rsvpNoLink}}" style="padding: 10px 22px; margin: 5px; background-color: #cccccc; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">💔 Sorry, can’t make it</a>
+    <a href="{{rsvpMaybeLink}}" style="padding: 10px 22px; margin: 5px; background-color: #ffcc80; color: white; text-decoration: none; border-radius: 8px; display: inline-block;">🤔 Maybe</a>
+  </div>
 
-<p>
-  <a href="{{rsvpYesLink}}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">✅ Yes</a>
-  &nbsp;
-  <a href="{{rsvpNoLink}}" style="padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 5px;">❌ No</a>
-  &nbsp;
-  <a href="{{rsvpMaybeLink}}" style="padding: 10px 20px; background-color: #ff9800; color: white; text-decoration: none; border-radius: 5px;">❓ Maybe</a>
-</p>
+  <p style="margin-top: 2rem;">
+    We look forward to celebrating this unforgettable day with you.
+  </p>
 
-<p>We can’t wait to celebrate with you.</p>
-
-<p>With all our love,<br />
-{{partner1}} & {{partner2}}</p>
+  <p style="font-style: italic; margin-top: 2rem;">
+    With love,<br />
+    {{partner1}} & {{partner2}}
+  </p>
+</div>
