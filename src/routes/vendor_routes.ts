@@ -12,12 +12,10 @@ router.use(authMiddleware);
 // router.post("/ai-research",authMiddleware, vendorController.processResearchTask);
 
 // CRUD routes
-router.get("/relevant", authMiddleware, vendorController.getRelevantVendors.bind(vendorController));
 router.get("/summary", authMiddleware, vendorController.getVendorSummary);
 router.get("/", authMiddleware, vendorController.getAll.bind(vendorController));
-router.get("/:id", authMiddleware, vendorController.getById);
-router.get("/mine", authMiddleware, vendorController.getMine);
-router.delete("/:id", authMiddleware, vendorController.deleteItem);
+router.get('/mine',authMiddleware,  vendorController.getUserVendors.bind(vendorController));
+router.get("/:id", authMiddleware, vendorController.getById.bind(vendorController));
 
 // Additional routes
 router.get("/type/:type", authMiddleware, vendorController.getByType);

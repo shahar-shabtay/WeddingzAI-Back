@@ -4,6 +4,7 @@ import FirecrawlApp from "@mendable/firecrawl-js";
 import { VendorType, VENDOR_TYPES } from "../config/vendors-types";
 import { VendorModel, IVendor } from "../models/vendor-model";
 import tdlModel from "../models/tdl-model";
+import userModel from "../models/user-model";
 import openai from "../common/openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
@@ -183,113 +184,110 @@ export class VendorService {
 
   // Process the entire vendor research workflow
   async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
-    try {
-      console.log(`[VendorService] Analyzing query: "${userQuery}"`);
-      const vendorType = this.analyzeVendorType(userQuery);
-      
-      if (!vendorType) {
-        return {
-          vendorType: "unknown",
-          urlsFound: 0,
-          scrapedVendors: [],
-          error: "Could not determine vendor type from your query. Please be more specific."
-        };
-      }
-      
-      console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
+  try {
+    console.log(`[VendorService] Analyzing query: "${userQuery}"`);
+    const vendorType = this.analyzeVendorType(userQuery);
 
-      try {
-        const tdlDoc = await tdlModel.findOne({ userId });
-        if (!tdlDoc || !tdlDoc.tdl || !Array.isArray(tdlDoc.tdl.sections)) {
-          console.warn(`[VendorService] No TDL found for userId=${userId}`);
-        } else {
-          let updated = false;
-
-          for (const section of tdlDoc.tdl.sections) {
-            console.log(`[VendorService] Checking section: ${section.sectionName}`);
-            for (const todo of section.todos) {
-              const normalized = todo.task.toLowerCase();
-              const matchQuery = userQuery.toLowerCase();
-              const matchVendor = vendorType.name.toLowerCase();
-
-              if (
-                normalized.includes(matchQuery) ||
-                normalized.includes(matchVendor)
-              ) {
-                console.log(`[VendorService] Matched task: "${todo.task}"`);
-
-                if (!todo.aiSent) {
-                  todo.aiSent = true;
-                  updated = true;
-                  console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
-                  break; // ✅ Stop after first match
-                } else {
-                  console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
-                }
-              }
-            }
-            if (updated) break;
-          }
-
-          if (updated) {
-            tdlDoc.markModified("tdl.sections"); // ✅ optional but safe
-            await tdlDoc.save();
-            console.log(`[VendorService] TDL document saved successfully`);
-          } else {
-            console.log(`[VendorService] No matching task updated for query "${userQuery}"`);
-          }
-        }
-      } catch (err) {
-        console.error(`[VendorService] Error updating aiSent field in TDL:`, err);
-      }
-      const vendorUrls = await this.findVendorUrls(vendorType);
-      
-      if (vendorUrls.length === 0) {
-        return {
-          vendorType: vendorType.name,
-          urlsFound: 0,
-          scrapedVendors: [],
-          error: `No ${vendorType.name} vendors found at the listing URL.`
-        };
-      }
-            
-      const MAX_VENDORS = 1000;
-      const vendorsToProcess = vendorUrls.slice(0, MAX_VENDORS);
-      
-      const scrapedVendors = [];
-      for (const url of vendorsToProcess) {
-        try {
-          const vendor = await this.scrapeAndSaveVendor(url, vendorType);
-          
-          const vendorId = vendor._id ? vendor._id.toString() : vendor.id?.toString() || '';
-          
-          scrapedVendors.push({
-            id: vendorId,
-            name: vendor.name || '',
-            url: url
-          });
-        } catch (err) {
-          console.error(`[VendorService] Error scraping ${url}:`, err);
-        }
-      }
-            // Update the matching task in the user's TDL to mark it as aiSent=true
-     
-    
+    if (!vendorType) {
       return {
-        vendorType: vendorType.name,
-        urlsFound: vendorUrls.length,
-        scrapedVendors: scrapedVendors
-      };
-    } catch (err: any) {
-      console.error("[VendorService] Unexpected error:", err);
-      return {
-        vendorType: "error",
+        vendorType: "unknown",
         urlsFound: 0,
         scrapedVendors: [],
-        error: `An unexpected error occurred: ${err.message}`
+        error: "Could not determine vendor type from your query. Please be more specific.",
       };
     }
+
+    console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
+
+    // Mark aiSent=true in the matching TDL task
+    try {
+      const tdlDoc = await tdlModel.findOne({ userId });
+      if (!tdlDoc || !tdlDoc.tdl || !Array.isArray(tdlDoc.tdl.sections)) {
+        console.warn(`[VendorService] No TDL found for userId=${userId}`);
+      } else {
+        let updated = false;
+        for (const section of tdlDoc.tdl.sections) {
+          for (const todo of section.todos) {
+            const normalized = todo.task.toLowerCase();
+            const matchQuery = userQuery.toLowerCase();
+            const matchVendor = vendorType.name.toLowerCase();
+
+            if (normalized.includes(matchQuery) || normalized.includes(matchVendor)) {
+              console.log(`[VendorService] Matched task: "${todo.task}"`);
+
+              if (!todo.aiSent) {
+                todo.aiSent = true;
+                updated = true;
+                console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
+                break;
+              } else {
+                console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
+              }
+            }
+          }
+          if (updated) break;
+        }
+
+        if (updated) {
+          tdlDoc.markModified("tdl.sections");
+          await tdlDoc.save();
+          console.log(`[VendorService] TDL document saved successfully`);
+        }
+      }
+    } catch (err) {
+      console.error(`[VendorService] Error updating aiSent field in TDL:`, err);
+    }
+
+    // Fetch vendor URLs from listing
+    const vendorUrls = await this.findVendorUrls(vendorType);
+    if (vendorUrls.length === 0) {
+      return {
+        vendorType: vendorType.name,
+        urlsFound: 0,
+        scrapedVendors: [],
+        error: `No ${vendorType.name} vendors found at the listing URL.`,
+      };
+    }
+
+    const MAX_VENDORS = 1000;
+    const vendorsToProcess = vendorUrls.slice(0, MAX_VENDORS);
+    const scrapedVendors: VendorResearchResult["scrapedVendors"] = [];
+
+    for (const url of vendorsToProcess) {
+      try {
+        const vendor = await this.scrapeAndSaveVendor(url, vendorType);
+        const vendorId = vendor._id?.toString() || vendor.id?.toString() || "";
+        scrapedVendors.push({ id: vendorId, name: vendor.name || "", url });
+      } catch (err) {
+        console.error(`[VendorService] Error scraping ${url}:`, err);
+      }
+    }
+
+    // ✅ Get relevant vendors using Gemini AI and save to user's myVendors field
+    const relevantVendors = await this.getRelevantVendorsByTDL(userId);
+    const vendorIds = relevantVendors.map((v) => v._id);
+
+    await userModel.findByIdAndUpdate(userId, {
+      $addToSet: { myVendors: { $each: vendorIds } },
+    });
+
+    console.log(`[VendorService] Saved ${vendorIds.length} relevant vendors to user ${userId}`);
+
+    return {
+      vendorType: vendorType.name,
+      urlsFound: vendorUrls.length,
+      scrapedVendors,
+    };
+  } catch (err: any) {
+    console.error("[VendorService] Unexpected error:", err);
+    return {
+      vendorType: "error",
+      urlsFound: 0,
+      scrapedVendors: [],
+      error: `An unexpected error occurred: ${err.message}`,
+    };
   }
+}
 
   // AI-based filtering of vendors based on the user's TDL tasks
   async getRelevantVendorsByTDL(userId: string): Promise<IVendor[]> {
@@ -358,6 +356,12 @@ export class VendorService {
   }
 
   return results;
+}
+
+async getUserVendors(userId: string): Promise<IVendor[]> {
+  const user = await userModel.findById(userId).populate("myVendors");
+  if (!user || !Array.isArray(user.myVendors)) return [];
+  return user.myVendors as IVendor[];
 }
 
 }
