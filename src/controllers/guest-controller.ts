@@ -142,7 +142,9 @@ class GuestsController extends BaseController<IGuest> {
           fullName: g.fullName,
           guestId: g._id.toString(),
           rsvpToken: g.rsvpToken!,
+          numberOfGuests: g.numberOfGuests ?? 1
         }));
+
 
       if (recipients.length === 0) {
         res.status(400).json({ message: 'No guests with valid emails found' });
