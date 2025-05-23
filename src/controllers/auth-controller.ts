@@ -51,6 +51,8 @@ const googleSignIn = async (req: Request, res: Response) => {
                 secondPartner: user.secondPartner,
                 email: user.email,
                 avatar: user.avatar,
+                weddingDate: user.weddingDate,
+                weddingVenue: user.weddingVenue,
             });
         }
     } catch (error) {
@@ -118,6 +120,8 @@ const register = async (req: Request, res: Response) => {
             email: req.body.email,
             password: hashPassword,
             avatar: req.body.avatar,
+            weddingDate: req.body.weddingDate,
+            weddingVenue: req.body.weddingVenue,
         });
         res.status(200).send(user);
     } catch (error) {
@@ -163,6 +167,8 @@ const login = async (req: Request, res: Response) => {
             secondPartner: user.secondPartner,
             email: user.email,
             avatar: user.avatar,
+            weddingDate: user.weddingDate,
+            weddingVenue: user.weddingVenue,
         });
     } catch (error) {
         res.status(400).send(error);
@@ -311,6 +317,8 @@ const updateUser = async (req: AuthRequest, res: Response) => {
             firstPartner: updatedUser.firstPartner,
             secondPartner: updatedUser.secondPartner,
             avatar: updatedUser.avatar,
+            weddingDate: updatedUser.weddingDate,
+            weddingVenue: updatedUser.weddingVenue,
         });
     } catch (error) {
         res.status(500).send({ message: "Server error", error });

@@ -7,6 +7,7 @@ export interface IGuest {
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
   rsvpToken: string;
+  numberOfGuests?: number; // New field to represent the total guests including the main guest
 }
 
 // Regular expression for email validation
@@ -47,9 +48,15 @@ const guestSchema = new mongoose.Schema<IGuest>({
     type: String,
     required: true,
     unique: true
+  },
+  numberOfGuests: {
+    type: Number,
+    min: [1, "At least one guest must be specified"],
+    default: 1
   }
 });
 
+// Ensure each email is unique per user
 guestSchema.index({ userId: 1, email: 1 }, { unique: true });
 
 const guestModel = mongoose.model<IGuest>("guests", guestSchema);

@@ -6,6 +6,8 @@ const router = Router();
 
 // Public RSVP route
 router.get('/rsvp', guestsController.rsvpResponse);
+router.get('/guests/rsvp-response', guestsController.rsvpResponse);
+router.post('/guests/rsvp-response', guestsController.rsvpResponse);
 
 // Authenticated routes
 router.get(    '/guests',             authMiddleware, guestsController.getAll.bind(guestsController));
