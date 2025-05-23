@@ -9,7 +9,7 @@ const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
 
 async function getOAuth2Client() {
   const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
-  const tokenJSON = Buffer.from(process.env.GMAIL_TOKEN_BASE64!, 'base64').toString('utf8');
+  const tokenJSON = Buffer.from(tokenBase64(), 'base64').toString('utf8');
 
   const credentials = JSON.parse(credJSON).installed;
   const token = JSON.parse(tokenJSON);
@@ -19,6 +19,10 @@ async function getOAuth2Client() {
 
   oAuth2Client.setCredentials(token);
   return oAuth2Client;
+}
+
+function tokenBase64() {
+  return process.env.GMAIL_TOKEN_BASE64!;
 }
 
 function encodeSubject(subject: string): string {
@@ -54,10 +58,13 @@ async function loadInvitationMessage(
   weddingDate?: string,
   venue?: string
 ): Promise<string> {
+  const hasDate = weddingDate && weddingDate.toLowerCase() !== 'tbd';
+  const hasVenue = venue && venue.toLowerCase() !== 'tbd';
+
   let templateFile = "invitation-template-none.html";
-  if (weddingDate && venue) {
+  if (hasDate && hasVenue) {
     templateFile = "invitation-template-full.html";
-  } else if (weddingDate) {
+  } else if (hasDate) {
     templateFile = "invitation-template-dateOnly.html";
   }
 
@@ -68,8 +75,8 @@ async function loadInvitationMessage(
     .replace(/{{partner1}}/g, partner1)
     .replace(/{{partner2}}/g, partner2)
     .replace(/{{guestName}}/g, guestName)
-    .replace(/{{weddingDate}}/g, weddingDate || "To Be Determined")
-    .replace(/{{venue}}/g, venue || "To Be Determined")
+    .replace(/{{weddingDate}}/g, hasDate ? weddingDate : "To Be Determined")
+    .replace(/{{venue}}/g, hasVenue ? venue : "To Be Determined")
     .replace(/{{rsvpYesLink}}/g, createRSVPLink('yes', guestId, rsvpToken))
     .replace(/{{rsvpNoLink}}/g, createRSVPLink('no', guestId, rsvpToken))
     .replace(/{{rsvpMaybeLink}}/g, createRSVPLink('maybe', guestId, rsvpToken));

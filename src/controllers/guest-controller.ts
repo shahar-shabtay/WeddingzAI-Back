@@ -126,7 +126,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      const { partner1, partner2, weddingDate } = req.body;
+      const { partner1, partner2, weddingDate, venue } = req.body;
 
       if (!partner1 || !partner2 || !weddingDate) {
         res.status(400).json({ message: 'Missing required fields' });
@@ -151,7 +151,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      await sendInvitationEmails(recipients, partner1, partner2, weddingDate);
+      await sendInvitationEmails(recipients, partner1, partner2, weddingDate, venue);
 
       res.status(200).json({ message: 'Invitations sent to all guests' });
     } catch (err) {
