@@ -5,8 +5,8 @@ import { google } from 'googleapis';
 import open from 'open';
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.send'];
-const CREDENTIALS_PATH = path.join(__dirname, 'creds.json');
-const TOKEN_PATH = path.join(__dirname, 'token.json');
+const CREDENTIALS_PATH = path.join('/Users/I761928/creds.json');
+const TOKEN_PATH = path.join('/Users/I761928/token.json');
 
 function readCredentials(): Promise<any> {
   return new Promise((resolve, reject) => {

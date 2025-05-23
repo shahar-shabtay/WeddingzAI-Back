@@ -3,9 +3,9 @@ import path from "path";
 import fs from "fs/promises";
 import dotenv from "dotenv";
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
-
 dotenv.config();
+
+const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
 
 async function getOAuth2Client() {
   const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
@@ -48,19 +48,28 @@ function createRSVPLink(type: 'yes' | 'no' | 'maybe', guestId: string, token: st
 async function loadInvitationMessage(
   partner1: string,
   partner2: string,
-  weddingDate: string,
   guestName: string,
   guestId: string,
-  rsvpToken: string
+  rsvpToken: string,
+  weddingDate?: string,
+  venue?: string
 ): Promise<string> {
-  const templatePath = path.join(__dirname, "../templates/invitation-template.html");
+  let templateFile = "invitation-template-none.html";
+  if (weddingDate && venue) {
+    templateFile = "invitation-template-full.html";
+  } else if (weddingDate) {
+    templateFile = "invitation-template-dateOnly.html";
+  }
+
+  const templatePath = path.join(__dirname, `../templates/${templateFile}`);
   let content = await fs.readFile(templatePath, "utf8");
 
   return content
     .replace(/{{partner1}}/g, partner1)
     .replace(/{{partner2}}/g, partner2)
-    .replace(/{{weddingDate}}/g, weddingDate)
     .replace(/{{guestName}}/g, guestName)
+    .replace(/{{weddingDate}}/g, weddingDate || "To Be Determined")
+    .replace(/{{venue}}/g, venue || "To Be Determined")
     .replace(/{{rsvpYesLink}}/g, createRSVPLink('yes', guestId, rsvpToken))
     .replace(/{{rsvpNoLink}}/g, createRSVPLink('no', guestId, rsvpToken))
     .replace(/{{rsvpMaybeLink}}/g, createRSVPLink('maybe', guestId, rsvpToken));
@@ -73,13 +82,14 @@ export async function sendInvitationEmail(
   rsvpToken: string,
   partner1: string,
   partner2: string,
-  weddingDate: string
+  weddingDate?: string,
+  venue?: string
 ) {
   const auth = await getOAuth2Client();
   const gmail = google.gmail({ version: 'v1', auth });
 
   const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
-  const message = await loadInvitationMessage(partner1, partner2, weddingDate, guestName, guestId, rsvpToken);
+  const message = await loadInvitationMessage(partner1, partner2, guestName, guestId, rsvpToken, weddingDate, venue);
   const raw = createEmail(to, subject, message);
 
   await gmail.users.messages.send({
@@ -99,7 +109,8 @@ export async function sendInvitationEmails(
   guests: GuestInfo[],
   partner1: string,
   partner2: string,
-  weddingDate: string
+  weddingDate?: string,
+  venue?: string
 ) {
   const auth = await getOAuth2Client();
   const gmail = google.gmail({ version: 'v1', auth });
@@ -110,10 +121,11 @@ export async function sendInvitationEmails(
     const message = await loadInvitationMessage(
       partner1,
       partner2,
-      weddingDate,
       guest.fullName,
       guest.guestId,
-      guest.rsvpToken
+      guest.rsvpToken,
+      weddingDate,
+      venue
     );
     const raw = createEmail(guest.email, subject, message);
 
