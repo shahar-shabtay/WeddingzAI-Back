@@ -161,42 +161,55 @@ class GuestsController extends BaseController<IGuest> {
 
   public rsvpResponse = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { guestId, token, response } = req.query;
-  
+      const { guestId, token, response, numberOfGuests } =
+        req.method === "POST" ? req.body : req.query;
+
       if (!guestId || !token || !response) {
         res.status(400).send("Missing guestId, token, or response.");
         return;
       }
-  
+
       if (!["yes", "no", "maybe"].includes(response as string)) {
         res.status(400).send("Invalid RSVP response.");
         return;
       }
-  
+
       const guest = await guestModel.findById(guestId);
       if (!guest || guest.rsvpToken !== token) {
         res.status(403).send("Invalid token or guest not found.");
         return;
       }
-  
+
       guest.rsvp = response as "yes" | "no" | "maybe";
+
+      const parsedCount = parseInt(numberOfGuests as string);
+      if (!isNaN(parsedCount) && parsedCount >= 1 && parsedCount <= 20) {
+        guest.numberOfGuests = parsedCount;
+      }
+
       await guest.save();
-  
-      const templatePath = path.join(__dirname, "../templates/rsvp-respone.html");
-      let html = await fs.readFile(templatePath, "utf8");
-  
-      html = html
-        .replace(/{{fullName}}/g, guest.fullName)
-        .replace(/{{response}}/g, response as string)
-        .replace(/{{bgImageUrl}}/g, "http://localhost:4000/static/main-bg.png");
-  
-      res.set("Content-Type", "text/html");
-      res.send(html);
+
+      if (req.method === "POST") {
+        res.status(200).send("OK");
+      } else {
+        const templatePath = path.join(__dirname, "../templates/rsvp-respone.html");
+        let html = await fs.readFile(templatePath, "utf8");
+
+        html = html
+          .replace(/{{fullName}}/g, guest.fullName)
+          .replace(/{{response}}/g, response as string)
+          .replace(/{{bgImageUrl}}/g, "http://localhost:4000/static/main-bg.png");
+
+        res.set("Content-Type", "text/html");
+        res.send(html);
+      }
     } catch (err) {
       console.error("RSVP render error:", err);
       res.status(500).send("Something went wrong.");
     }
   };
+
+
   
 }
 
