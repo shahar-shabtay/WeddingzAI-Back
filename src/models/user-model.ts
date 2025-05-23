@@ -62,11 +62,13 @@ const userSchema = new mongoose.Schema<IUser>({
   }],
   weddingDate: {
     type: String,
-    required: false
+    required: false,
+    default: "TBD"
   },
   weddingVenue: {
     type: String,
-    required: false
+    required: false,
+    default: "TBD"
   },
 });
 
