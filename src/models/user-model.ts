@@ -11,6 +11,8 @@ export interface IUser {
   avatar?: string;
   is_premium?: boolean;
   myVendors: IVendor[];
+  weddingDate?: Date;
+  weddingVenue?: string;
 }
 
 // Regular expression for email validation
@@ -58,6 +60,14 @@ const userSchema = new mongoose.Schema<IUser>({
     ref: "Vendor", // this must match your Vendor model name
     default: [],
   }],
+  weddingDate: {
+    type: Date,
+    required: false
+  },
+  weddingVenue: {
+    type: String,
+    required: false
+  },
 });
 
 const userModel = mongoose.model<IUser>("users", userSchema);
