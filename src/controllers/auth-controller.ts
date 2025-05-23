@@ -291,7 +291,7 @@ const refresh = async (req: Request, res: Response) => {
 // Update User
 const updateUser = async (req: AuthRequest, res: Response) => {
     const { _id } = req.user as { _id: string };
-    const { email, firstPartner, secondPartner, avatar } = req.body;
+    const { email, firstPartner, secondPartner, avatar, weddingDate, weddingVenue } = req.body;
 
     try {
         const user = await userModel.findById(_id);
@@ -309,6 +309,8 @@ const updateUser = async (req: AuthRequest, res: Response) => {
         if (firstPartner) user.firstPartner = firstPartner;
         if (secondPartner) user.secondPartner = secondPartner;
         if (avatar) user.avatar = avatar;
+        if (weddingDate) user.weddingDate = weddingDate;
+        if (weddingVenue) user.weddingVenue = weddingVenue;
 
         const updatedUser = await user.save();
         console.log("User updated");
