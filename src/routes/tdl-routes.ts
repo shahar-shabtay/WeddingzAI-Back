@@ -10,28 +10,36 @@ const upload = multer({ dest: "uploads/" });
 
 // Create new
 router.post(
-  "/tdl/upload-form",
+  "/upload-form",
   authMiddleware,
   upload.single("file"),
   (req, res, next) => tdlController.upload(req, res, next)
 );
 
 // List all
-router.get("/tdl", authMiddleware, (req, res) => tdlController.getAll(req, res));
+router.get("/", authMiddleware, tdlController.getAll.bind(tdlController));
 
 // List only mine
-router.get("/tdl/mine", authMiddleware, (req, res) => tdlController.getMine(req, res));
+router.get("/mine", authMiddleware, tdlController.getMine.bind(tdlController));
 
 // Get by ID
-router.get("/tdl/:id", authMiddleware, (req, res) =>
-  tdlController.getById(req, res)
-);
+router.get("/:id", authMiddleware, tdlController.getById.bind(tdlController));
 
-// Delete
-router.delete("/tdl/:id", authMiddleware, (req, res) =>
-  tdlController.deleteItem(req, res)
-);
+// Delete Task
+router.delete("/task", authMiddleware, tdlController.deleteTask);
 
-router.get("/tdl/user/:id", authMiddleware,tdlController.getByUser);
+// Get user tdl
+router.get("/user/:id", authMiddleware,tdlController.getByUser);
+
+// Add task
+router.post("/task", authMiddleware, tdlController.addTask);
+
+// Update task
+router.put("/task", authMiddleware, tdlController.updateTask);
+
+// Update wedding date
+router.put("/date",authMiddleware,tdlController.updateWeddingDate);
+
+// make task done
 
 export default router;

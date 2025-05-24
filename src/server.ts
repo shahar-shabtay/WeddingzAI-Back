@@ -39,11 +39,9 @@ app.use((req, res, next) => {
 
 // Static files
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
-app.use('/static', express.static(path.join(__dirname, './static')));
-
-// API routes
+// Routes
 app.use(`${apiBase}/budget`, budgetRoutes);
-app.use(apiBase, tdlRoutes);
+app.use(`${apiBase}/tdl`, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(apiBase, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
