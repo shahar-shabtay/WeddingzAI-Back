@@ -6,6 +6,7 @@ export interface IGuest {
   email: string;
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
+  tableId?: mongoose.Types.ObjectId | null;
 }
 
 // Regular expression for email validation
@@ -15,12 +16,12 @@ const guestSchema = new mongoose.Schema<IGuest>({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "users",
-    required: true
+    required: true,
   },
   fullName: {
     type: String,
     required: [true, "Full name is required"],
-    trim: true
+    trim: true,
   },
   email: {
     type: String,
@@ -30,18 +31,23 @@ const guestSchema = new mongoose.Schema<IGuest>({
     validate: {
       validator: (value: string) => emailRegex.test(value),
       message: (props: { value: string }) =>
-        `${props.value} is not a valid email address`
-    }
+        `${props.value} is not a valid email address`,
+    },
   },
   phone: {
     type: String,
-    trim: true
+    trim: true,
   },
   rsvp: {
     type: String,
     enum: ["yes", "no", "maybe"],
-    default: "maybe"
-  }
+    default: "maybe",
+  },
+  tableId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "tables",
+    default: null,
+  },
 });
 
 guestSchema.index({ userId: 1, email: 1 }, { unique: true });
