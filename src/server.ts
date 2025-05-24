@@ -16,6 +16,8 @@ import detailsMatterRoutes from "./routes/details-matter-routes";
 import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
+import invitationRoutes from "./routes/invitation-routes";
+
 
 const app = express();
 const apiBase = "/api";
@@ -47,6 +49,8 @@ app.use(apiBase, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
+app.use(`${apiBase}/invitation`, invitationRoutes);
+
 
 // Root route
 app.get("/", (req: Request, res: Response) => {
