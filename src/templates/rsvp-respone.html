@@ -116,8 +116,11 @@
       const guestId = url.searchParams.get("guestId");
       const token = url.searchParams.get("token");
 
+      const initialGuestCount = "{{numberOfGuests}}";
+
       if (response === "yes") {
         document.getElementById("guestCountContainer").style.display = "block";
+        document.getElementById("guestCount").value = initialGuestCount || "1";
       }
 
       async function submitCount() {
