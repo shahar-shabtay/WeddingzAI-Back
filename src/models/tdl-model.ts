@@ -6,7 +6,8 @@ const todoSchema = new Schema({
   dueDate:  { type: String },
   priority: { type: String },
   aiSent:   { type: Boolean, default: false },
-  done:     { type: Boolean, default: false }       // ← new field to mark task as completed
+  done:     { type: Boolean, default: false },
+  deleted:  { type: Boolean, default: false }
 }, { _id: false });
 
 // A section grouping multiple to-dos
@@ -43,7 +44,8 @@ export interface ITDL extends Document {
         dueDate:  string;
         priority: string;
         aiSent:   boolean;
-        done:     boolean;  
+        done:     boolean;
+        deleted:  boolean;
       }>;
     }>;
   };
