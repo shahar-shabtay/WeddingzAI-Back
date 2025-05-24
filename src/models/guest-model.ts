@@ -6,6 +6,8 @@ export interface IGuest {
   email: string;
   phone?: string;
   rsvp?: "yes" | "no" | "maybe";
+  rsvpToken: string;
+  numberOfGuests?: number; // New field to represent the total guests including the main guest
   tableId?: mongoose.Types.ObjectId | null;
 }
 
@@ -43,6 +45,16 @@ const guestSchema = new mongoose.Schema<IGuest>({
     enum: ["yes", "no", "maybe"],
     default: "maybe",
   },
+  rsvpToken: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+  numberOfGuests: {
+    type: Number,
+    min: [1, "At least one guest must be specified"],
+    default: 1,
+  },
   tableId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "tables",
@@ -50,6 +62,7 @@ const guestSchema = new mongoose.Schema<IGuest>({
   },
 });
 
+// Ensure each email is unique per user
 guestSchema.index({ userId: 1, email: 1 }, { unique: true });
 
 const guestModel = mongoose.model<IGuest>("guests", guestSchema);

@@ -1,17 +1,29 @@
-import { Router } from 'express';
-import authMiddleware from '../common/auth-middleware';
-import vendorsCtrl from '../controllers/vendor-controller';
+import express from "express";
+import { vendorController } from "../controllers/vendor-controller";
+import authMiddleware  from "../common/auth-middleware";
+import { auth } from "google-auth-library";
 
-const router = Router();
+const router = express.Router();
 
-// CRUD via BaseController:
-router.get(   '/djs',        authMiddleware, vendorsCtrl.getAll.bind(vendorsCtrl)      );
-router.get(   '/djs/mine',   authMiddleware, vendorsCtrl.getMine.bind(vendorsCtrl)       );
-router.get(   '/djs/:id',    authMiddleware, vendorsCtrl.getById.bind(vendorsCtrl)       );
-router.delete('/djs/:id',    authMiddleware, vendorsCtrl.deleteItem.bind(vendorsCtrl)   );
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
-// Scraping endpoints:
-router.post(  '/djs/find',   authMiddleware, vendorsCtrl.find        );
-router.post(  '/djs/scrape', authMiddleware, vendorsCtrl.scrape      );
+// Research routes
+// router.post("/ai-research",authMiddleware, vendorController.processResearchTask);
+
+// CRUD routes
+router.get("/summary", authMiddleware, vendorController.getVendorSummary);
+router.get("/", authMiddleware, vendorController.getAll.bind(vendorController));
+router.get('/mine',authMiddleware,  vendorController.getUserVendors.bind(vendorController));
+router.get("/:id", authMiddleware, vendorController.getById.bind(vendorController));
+
+// Additional routes
+router.get("/type/:type", authMiddleware, vendorController.getByType);
+router.get("/search", authMiddleware, vendorController.search);
+
+
+
+router.post("/research/background",authMiddleware, vendorController.startBackgroundResearch);
+
 
 export default router;

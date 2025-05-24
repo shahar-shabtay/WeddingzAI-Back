@@ -40,20 +40,30 @@ const authMiddleware = (
   }
 
   try {
-    const decoded = jwt.verify(token, secret) as TokenPayload;
 
-    req.user = {
-      _id: decoded._id,
-      email: decoded.email,
-      firstPartner: decoded.firstPartner,
-      secondPartner: decoded.secondPartner,
-      avatar: decoded.avatar,
-    };
+    jwt.verify(token, secret, (err, data) => {
+      if (err) {
+        if (err.name === "TokenExpiredError") {
+          console.log("Access token expired");
+          return res.status(401).send({ message: "Token Expired" });
+        }
+        console.log("Invalid token:", err.message);
+        return res.status(403).send({ message: "Invalid Token" });
+      }
 
-    next();
+      req.user = {
+        _id: (data as TokenPayload)._id,
+        email: (data as TokenPayload).email,
+        firstPartner: (data as TokenPayload).firstPartner,
+        secondPartner: (data as TokenPayload).secondPartner,
+        avatar: (data as TokenPayload).avatar,
+      };
+      next();
+    });
+
   } catch (error) {
     console.error("Token error:", error);
-    res.status(401).json({ message: "Unauthorized: Invalid or expired token" });
+    res.status(403).json({ message: "Unauthorized: Invalid or expired token" });
   }
 };
 

@@ -63,3 +63,6 @@ storage/
 # Front directory 
 front/
 
+.env
+
+.gmail-token.json

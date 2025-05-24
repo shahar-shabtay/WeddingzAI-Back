@@ -2,9 +2,7 @@ import { Response } from "express";
 import { Model } from "mongoose";
 import { AuthRequest } from "../common/auth-middleware";
 
-/**
- * A generic controller providing basic CRUD and user-scoped retrieval.
- */
+// A generic controller providing basic CRUD and user-scoped retrieval.
 export class BaseController<T> {
   protected model: Model<T>;
 
@@ -12,23 +10,17 @@ export class BaseController<T> {
     this.model = model;
   }
 
-  /**
-   * Extracts the authenticated user's ID from the request.
-   */
+  // Extracts the authenticated user's ID from the request.
   protected getUserId(req: AuthRequest): string | null {
     return req.user?._id || null;
   }
 
-  /**
-   * Sends a standard success response.
-   */
+  //  Sends a standard success response.
   protected sendSuccess(res: Response, data: any, message = "Success") {
     return res.status(200).json({ message, data });
   }
 
-  /**
-   * Sends a standardized error response.
-   */
+  //  Sends a standardized error response.
   protected sendError(res: Response, error: any, code = 500) {
     console.error("Controller Error:", error);
     return res
@@ -51,9 +43,7 @@ export class BaseController<T> {
     }
   }
 
-  /**
-   * GET /    — list all documents
-   */
+  //  GET /    — list all documents
   async getAll(req: AuthRequest, res: Response): Promise<void> {
     try {
       const items = await this.model.find();
@@ -63,22 +53,26 @@ export class BaseController<T> {
     }
   }
 
-  /**
-   * GET /:id — get document by its ID
-   */
+  // GET /:id — get document by its ID
   async getById(req: AuthRequest, res: Response): Promise<void> {
     try {
+      console.log("[BaseController] Fetching by ID:", req.params.id);
+
       const item = await this.model.findById(req.params.id);
-      if (!item) res.status(404).json({ message: "Not found" });
+      if (!item) {
+        console.warn("[BaseController] Item not found for ID:", req.params.id);
+        res.status(404).json({ message: "Not found" });
+        return;
+      }
+
       this.sendSuccess(res, item);
     } catch (err: any) {
+      console.error("[BaseController] getById error:", err);
       this.sendError(res, err, 400);
     }
   }
 
-  /**
-   * GET /mine — get all documents belonging to the authenticated user
-   */
+  // GET /mine — get all documents belonging to the authenticated user
   async getMine(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = this.getUserId(req);
@@ -91,9 +85,7 @@ export class BaseController<T> {
     }
   }
 
-  /**
-   * DELETE /:id — delete a document by its ID
-   */
+  // DELETE /:id — delete a document by its ID
   async deleteItem(req: AuthRequest, res: Response): Promise<void> {
     try {
       const result = await this.model.findByIdAndDelete(req.params.id);

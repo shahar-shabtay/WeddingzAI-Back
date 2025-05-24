@@ -1,8 +1,11 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import guestModel, { IGuest } from '../models/guest-model';
 import { BaseController } from './base-controller';
 import { AuthRequest } from '../common/auth-middleware';
 import { sendInvitationEmails } from '../services/gmail-service';
+import fs from "fs/promises";
+import path from "path";
 
 class GuestsController extends BaseController<IGuest> {
   constructor() {
@@ -21,7 +24,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      const { fullName, email, phone, rsvp } = req.body;
+      const { fullName, email, phone, rsvp, numberOfGuests } = req.body;
 
       if (!fullName || !email) {
         res.status(400).json({ message: 'fullName and email are required' });
@@ -34,12 +37,16 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
+      const rsvpToken = crypto.randomBytes(16).toString('hex');
+
       const newGuest = await guestModel.create({
         userId,
         fullName,
         email,
         phone,
         rsvp,
+        rsvpToken,
+        numberOfGuests,
       });
 
       res.status(201).json({ message: 'Guest created', data: newGuest });
@@ -61,11 +68,11 @@ class GuestsController extends BaseController<IGuest> {
       }
 
       const { id } = req.params;
-      const { fullName, email, phone, rsvp } = req.body;
+      const { fullName, email, phone, rsvp, numberOfGuests } = req.body;
 
       const updatedGuest = await guestModel.findOneAndUpdate(
         { _id: id, userId },
-        { fullName, email, phone, rsvp },
+        { fullName, email, phone, rsvp, numberOfGuests },
         { new: true }
       );
 
@@ -119,7 +126,7 @@ class GuestsController extends BaseController<IGuest> {
         return;
       }
 
-      const { partner1, partner2, weddingDate } = req.body;
+      const { partner1, partner2, weddingDate, venue } = req.body;
 
       if (!partner1 || !partner2 || !weddingDate) {
         res.status(400).json({ message: 'Missing required fields' });
@@ -127,20 +134,84 @@ class GuestsController extends BaseController<IGuest> {
       }
 
       const guests = await guestModel.find({ userId });
-      const recipients = guests.map((g) => g.email).filter(Boolean);
+
+      const recipients = guests
+        .filter((g) => g.email && g.rsvpToken)
+        .map((g) => ({
+          email: g.email!,
+          fullName: g.fullName,
+          guestId: g._id.toString(),
+          rsvpToken: g.rsvpToken!,
+          numberOfGuests: g.numberOfGuests ?? 1
+        }));
+
 
       if (recipients.length === 0) {
         res.status(400).json({ message: 'No guests with valid emails found' });
         return;
       }
 
-      await sendInvitationEmails(recipients, partner1, partner2, weddingDate);
+      await sendInvitationEmails(recipients, partner1, partner2, weddingDate, venue);
 
       res.status(200).json({ message: 'Invitations sent to all guests' });
     } catch (err) {
       next(err);
     }
   };
+
+  public rsvpResponse = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { guestId, token, response, numberOfGuests } =
+        req.method === "POST" ? req.body : req.query;
+
+      if (!guestId || !token || !response) {
+        res.status(400).send("Missing guestId, token, or response.");
+        return;
+      }
+
+      if (!["yes", "no", "maybe"].includes(response as string)) {
+        res.status(400).send("Invalid RSVP response.");
+        return;
+      }
+
+      const guest = await guestModel.findById(guestId);
+      if (!guest || guest.rsvpToken !== token) {
+        res.status(403).send("Invalid token or guest not found.");
+        return;
+      }
+
+      guest.rsvp = response as "yes" | "no" | "maybe";
+
+      const parsedCount = parseInt(numberOfGuests as string);
+      if (!isNaN(parsedCount) && parsedCount >= 1 && parsedCount <= 20) {
+        guest.numberOfGuests = parsedCount;
+      }
+
+      await guest.save();
+
+      if (req.method === "POST") {
+        res.status(200).send("OK");
+      } else {
+        const templatePath = path.join(__dirname, "../templates/rsvp-respone.html");
+        let html = await fs.readFile(templatePath, "utf8");
+
+        html = html
+          .replace(/{{fullName}}/g, guest.fullName)
+          .replace(/{{response}}/g, response as string)
+          .replace(/{{bgImageUrl}}/g, "http://localhost:4000/static/main-bg.png")
+          .replace(/{{numberOfGuests}}/g, String(guest.numberOfGuests ?? 1));
+          
+        res.set("Content-Type", "text/html");
+        res.send(html);
+      }
+    } catch (err) {
+      console.error("RSVP render error:", err);
+      res.status(500).send("Something went wrong.");
+    }
+  };
+
+
+  
 }
 
 export default new GuestsController();

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>RSVP Confirmed</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+
+      body {
+        font-family: sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-image: url('{{bgImageUrl}}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        color: white;
+        text-shadow: 0 0 5px black;
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        font-size: 1.25rem;
+        max-width: 600px;
+        margin: 0 20px;
+      }
+
+      .guest-count {
+        margin-top: 2rem;
+      }
+
+      select {
+        font-size: 1rem;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        border-radius: 6px;
+        border: none;
+        background: rgba(255, 255, 255, 0.9);
+        color: #4a235a;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      button {
+        font-size: 1rem;
+        padding: 0.6rem 1.2rem;
+        margin-top: 1rem;
+        border: none;
+        border-radius: 8px;
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #4a235a;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: background-color 0.2s, transform 0.1s;
+      }
+
+      button:hover {
+        background-color: rgba(255, 255, 255, 1);
+        transform: translateY(-1px);
+      }
+
+      .success {
+        margin-top: 1rem;
+        font-size: 1.25rem;
+        color: white;
+        text-shadow: 0 0 5px black;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎉 RSVP Confirmed</h1>
+    <p>
+      Thank you, {{fullName}}! Your RSVP has been recorded as:
+      <strong>{{response}}</strong>.
+    </p>
+
+    <div id="guestCountContainer" class="guest-count" style="display: none;">
+      <p>How many guests (including yourself) will attend?</p>
+      <select id="guestCount">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+      <br />
+      <button onclick="submitCount()">Update Number of Guests</button>
+      <div id="submitStatus" class="success"></div>
+    </div>
+
+    <p style="margin-top: 30px;">
+      You can always change your mind later using the RSVP links in your invitation email.
+    </p>
+
+    <script>
+      const url = new URL(window.location.href);
+      const response = url.searchParams.get("response");
+      const guestId = url.searchParams.get("guestId");
+      const token = url.searchParams.get("token");
+
+      const initialGuestCount = "{{numberOfGuests}}";
+
+      if (response === "yes") {
+        document.getElementById("guestCountContainer").style.display = "block";
+        document.getElementById("guestCount").value = initialGuestCount || "1";
+      }
+
+      async function submitCount() {
+        const count = document.getElementById("guestCount").value;
+        const statusDiv = document.getElementById("submitStatus");
+
+        try {
+          const res = await fetch("/api/guests/rsvp-response", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              guestId,
+              token,
+              response: "yes",
+              numberOfGuests: count
+            })
+          });
+
+          if (res.ok) {
+            statusDiv.textContent = "Guest count saved. Thank you!";
+          } else {
+            const error = await res.text();
+            statusDiv.textContent = "Failed to update: " + error;
+          }
+        } catch (err) {
+          console.error("Submit error:", err);
+          statusDiv.textContent = "Network error.";
+        }
+      }
+    </script>
+  </body>
+</html>
