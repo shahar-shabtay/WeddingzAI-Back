@@ -24,10 +24,17 @@ export class VendorController extends BaseController<IVendor> {
         return;
       }
       
+<<<<<<< HEAD
       console.log(`[VendorController] Starting background research for query: "${query}"`);
       await vendorQueue.add({ query, userId });      
       res.status(200).json({
         message: "Research started in background",
+=======
+            console.log(`[VendorController] Queuing background research for query: "${query}"`);
+      await vendorQueue.add({ query, userId });
+      res.status(202).json({
+        message: "Research job queued",
+>>>>>>> 3290df8 (Add crud for tdl)
         success: true,
         vendorType: "pending"
       });
@@ -85,6 +92,7 @@ export class VendorController extends BaseController<IVendor> {
     {
         this.sendError(res, new Error("Unauthorized"), 401);
         return;
+<<<<<<< HEAD
     }
 
     const user = await userModel.findById(userId).populate("myVendors");
@@ -99,6 +107,15 @@ export class VendorController extends BaseController<IVendor> {
     console.error("[VendorController] Failed to get relevant vendors:", err);
     this.sendError(res, err);
   }
+=======
+      }
+      const dj = await scrapeAndSaveDj(url);
+      res.json({ success: true, dj });
+    } catch (err) {
+      next(err);
+    }
+  };
+>>>>>>> 3290df8 (Add crud for tdl)
 }
 
 async getVendorSummary(req: AuthRequest, res: Response): Promise<void> {
