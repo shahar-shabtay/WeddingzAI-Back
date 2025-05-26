@@ -4,9 +4,11 @@ import { IGuest } from "./guest-model";
 import { IUser } from "./user-model";
 
 export interface ITable extends Document {
+  _id: mongoose.Types.ObjectId;
+
   userId: PopulatedDoc<IUser>;
   name: string;
-  shape: "round" | "rectangle";
+  shape: "round" | "rectangle" | "square";
   capacity: number;
   position: {
     x: { type: Number; default: 0 };
@@ -24,7 +26,7 @@ const tableSchema = new Schema<ITable>({
   name: { type: String, required: true },
   shape: {
     type: String,
-    enum: ["round", "rectangle"],
+    enum: ["round", "rectangle", "square"],
     default: "rectangle",
   },
   capacity: { type: Number, default: 8 },
