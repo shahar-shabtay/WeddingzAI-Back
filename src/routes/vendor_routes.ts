@@ -8,22 +8,20 @@ const router = express.Router();
 // Apply auth middleware to all routes
 router.use(authMiddleware);
 
-// Research routes
-// router.post("/ai-research",authMiddleware, vendorController.processResearchTask);
 
-// CRUD routes
-router.get("/summary", authMiddleware, vendorController.getVendorSummary);
-router.get("/", authMiddleware, vendorController.getAll.bind(vendorController));
-router.get('/mine',authMiddleware,  vendorController.getUserVendors.bind(vendorController));
-router.get("/:id", authMiddleware, vendorController.getById.bind(vendorController));
+// GET
+router.get("/summary", vendorController.getVendorSummary); // Get all user vendor - summary
+router.get("/", vendorController.getAll.bind(vendorController)); // Get all vendors
+router.get('/mine',  vendorController.getUserVendors.bind(vendorController)); // get all user vendor - details
+router.get("/relvant", vendorController.refetchRelevantVendors); // Update the relevant vendors for user
+router.get("/type/:type", vendorController.getByType); // get vendor by type
+router.get("/search", vendorController.search); // serach by field
+router.get("/:id", vendorController.getById.bind(vendorController)); // get vendor by ID
 
-// Additional routes
-router.get("/type/:type", authMiddleware, vendorController.getByType);
-router.get("/search", authMiddleware, vendorController.search);
+// POST
+router.post("/research/background", vendorController.startBackgroundResearch); // find vendors
 
-
-
-router.post("/research/background",authMiddleware, vendorController.startBackgroundResearch);
-
-
+//PATCH
+router.patch("/book", vendorController.toggleBooked);
+router.patch("/cancel", vendorController.cancelBook);
 export default router;

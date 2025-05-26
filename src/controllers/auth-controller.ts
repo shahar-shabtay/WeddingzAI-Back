@@ -53,6 +53,7 @@ const googleSignIn = async (req: Request, res: Response) => {
                 avatar: user.avatar,
                 weddingDate: user.weddingDate,
                 weddingVenue: user.weddingVenue,
+                bookedVendors: user.bookedVendors || []
             });
         }
     } catch (error) {
@@ -169,6 +170,7 @@ const login = async (req: Request, res: Response) => {
             avatar: user.avatar,
             weddingDate: user.weddingDate,
             weddingVenue: user.weddingVenue,
+            bookedVendors: user.bookedVendors || []
         });
     } catch (error) {
         res.status(400).send(error);

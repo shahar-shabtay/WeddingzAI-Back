@@ -358,11 +358,72 @@ export class VendorService {
   return results;
 }
 
-async getUserVendors(userId: string): Promise<IVendor[]> {
-  const user = await userModel.findById(userId).populate("myVendors");
-  if (!user || !Array.isArray(user.myVendors)) return [];
-  return user.myVendors as IVendor[];
+  async getUserVendors(userId: string): Promise<IVendor[]> {
+    const user = await userModel.findById(userId).populate("myVendors");
+    if (!user || !Array.isArray(user.myVendors)) return [];
+    return user.myVendors as IVendor[];
+  }
+
+// src/services/vendor-service.ts
+async toggleBookedVendor(userId: string, vendorId: string): Promise<{
+  added: boolean;
+  message: string;
+  vendorType?: string;
+}> {
+  const user = await userModel.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const vendor = await VendorModel.findById(vendorId);
+  if (!vendor) throw new Error("Vendor not found");
+
+  const alreadyBooked = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object'
+      ? bv.vendorId.toString() === vendorId
+      : bv.toString() === vendorId
+  );
+
+  if (alreadyBooked) {
+    user.bookedVendors = user.bookedVendors.filter((bv: any) =>
+      typeof bv === 'object'
+        ? bv.vendorId.toString() !== vendorId
+        : bv.toString() !== vendorId
+    );
+    await user.save();
+    return { added: false, message: "UNBOOKED" };
+  }
+
+  const sameTypeExists = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object' && bv.vendorType === vendor.vendorType
+  );
+
+  if (sameTypeExists) {
+    return {
+      added: false,
+      message: "TYPE_ALREADY_BOOKED",
+      vendorType: vendor.vendorType,
+    };
+  }
+
+  user.bookedVendors.push({ vendorId, vendorType: vendor.vendorType });
+  await user.save();
+  return { added: true, message: "BOOKED", vendorType: vendor.vendorType };
 }
+
+  // vendor-service.ts
+  async cancelBookedVendor(userId: string, vendorId: string): Promise<boolean> {
+    const user = await userModel.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const index = user.bookedVendors.findIndex((v: any) =>
+      v.vendorId.toString() === vendorId
+    );
+
+    if (index === -1) return false; // not booked
+
+    user.bookedVendors.splice(index, 1);
+    await user.save();
+    return true;
+  }
 
 }
 
