@@ -3,11 +3,19 @@ import Invitation, { IInvitation } from '../models/invitation-model';
 
 export class InvitationService {
   async generateImage(prompt: string): Promise<string> {
+    const enhancedPrompt = `Create a wedding invitation design. ${prompt} 
+    Important guidelines:
+    - Focus on elegant typography and wedding-appropriate design
+    - Use wedding-appropriate colors and elements
+    - Ensure names and dates are clearly visible and accurate
+    - Maintain a professional and sophisticated look
+    - Avoid any non-wedding related elements`;
+
     const response = await axios.post(
       `${process.env.DALLE_URL}`,
       {
         model: 'dall-e-3',
-        prompt,
+        prompt: enhancedPrompt,
         n: 1,
         size: '1024x1024',
       },

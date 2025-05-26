@@ -46,11 +46,12 @@ export interface ITDL extends Document {
   userId: mongoose.Types.ObjectId;
   tdl: {
     weddingTodoListName: string;
-    firstPartner: string;
-    secondPartner: string;
-    weddingDate: string;
     estimatedBudget: string;
     sections: ISection[];
+    firstPartner:        string;
+    secondPartner:       string;
+    weddingDate:         string;
+    estimatedBudget:     string;
   };
   createdAt: Date;
   updatedAt: Date;
