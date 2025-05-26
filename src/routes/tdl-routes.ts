@@ -6,25 +6,28 @@ import tdlController from "../controllers/tdl-controller";
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
+// Apply auth middleware to all routes
+router.use(authMiddleware);
+
+
 // POST
-router.post("/upload-form",
-  authMiddleware,upload.single("file"),
+router.post("/upload-form",upload.single("file"),
   (req, res, next) => tdlController.upload(req, res, next)); // Create new TDL.
-router.post("/task", authMiddleware, tdlController.addTask); // Add Task to TDL
+router.post("/task", tdlController.addTask); // Add Task to TDL
 
 // GET
-router.get("/", authMiddleware, tdlController.getAll.bind(tdlController)); // Get all TDLs
-router.get("/mine", authMiddleware, tdlController.getMine.bind(tdlController)); // Get user TDL
-router.get("/:id", authMiddleware, tdlController.getById.bind(tdlController)); // Get by TDL by ID
+router.get("/", tdlController.getAll.bind(tdlController)); // Get all TDLs
+router.get("/mine", tdlController.getMine.bind(tdlController)); // Get user TDL
+router.get("/:id", tdlController.getById.bind(tdlController)); // Get by TDL by ID
 
 // DELETE
-router.delete("/task", authMiddleware, tdlController.deleteTask); // Delete Task from TDL
+router.delete("/task", tdlController.deleteTask); // Delete Task from TDL
 
 // PUT
-router.put("/task", authMiddleware, tdlController.updateTask); // Update Task in TDL
-router.put("/date", authMiddleware, tdlController.updateWeddingDate); // Update Wedding Date
+router.put("/task", tdlController.updateTask); // Update Task in TDL
+router.put("/date", tdlController.updateWeddingDate); // Update Wedding Date
 
 // PATCH
-router.patch("/task/done", authMiddleware, tdlController.setTaskDone);// Mark Task Done
+router.patch("/done", tdlController.setTaskDone);// Mark Task Done
 
 export default router;
