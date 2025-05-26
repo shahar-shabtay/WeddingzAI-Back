@@ -6,8 +6,8 @@ const todoSchema = new Schema({
   dueDate:  { type: String },
   priority: { type: String },
   aiSent:   { type: Boolean, default: false },
-  done:     { type: Boolean, default: false }       // ← new field to mark task as completed
-}, { _id: false });
+  done:     { type: Boolean, default: false }
+}, { _id: true });  // Ensure each todo has its own _id
 
 // A section grouping multiple to-dos
 const sectionSchema = new Schema({
@@ -28,24 +28,30 @@ const tdlSchema = new Schema({
   }
 }, { timestamps: true });
 
+export interface ITodo {
+  _id: mongoose.Types.ObjectId;
+  task: string;
+  dueDate: string;
+  priority: string;
+  aiSent: boolean;
+  done: boolean;
+}
+
+export interface ISection {
+  sectionName: string;
+  todos: ITodo[];
+}
+
 export interface ITDL extends Document {
   userId: mongoose.Types.ObjectId;
   tdl: {
     weddingTodoListName: string;
+    estimatedBudget: string;
+    sections: ISection[];
     firstPartner:        string;
     secondPartner:       string;
     weddingDate:         string;
     estimatedBudget:     string;
-    sections: Array<{
-      sectionName: string;
-      todos: Array<{
-        task:     string;
-        dueDate:  string;
-        priority: string;
-        aiSent:   boolean;
-        done:     boolean;  
-      }>;
-    }>;
   };
   createdAt: Date;
   updatedAt: Date;

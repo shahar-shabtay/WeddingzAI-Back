@@ -1,5 +1,3 @@
-// src/routes/tdl-routes.ts
-
 import express from "express";
 import multer from "multer";
 import authMiddleware from "../common/auth-middleware";
@@ -8,38 +6,25 @@ import tdlController from "../controllers/tdl-controller";
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// Create new
-router.post(
-  "/upload-form",
-  authMiddleware,
-  upload.single("file"),
-  (req, res, next) => tdlController.upload(req, res, next)
-);
+// POST
+router.post("/upload-form",
+  authMiddleware,upload.single("file"),
+  (req, res, next) => tdlController.upload(req, res, next)); // Create new TDL.
+router.post("/task", authMiddleware, tdlController.addTask); // Add Task to TDL
 
-// List all
-router.get("/", authMiddleware, tdlController.getAll.bind(tdlController));
+// GET
+router.get("/", authMiddleware, tdlController.getAll.bind(tdlController)); // Get all TDLs
+router.get("/mine", authMiddleware, tdlController.getMine.bind(tdlController)); // Get user TDL
+router.get("/:id", authMiddleware, tdlController.getById.bind(tdlController)); // Get by TDL by ID
 
-// List only mine
-router.get("/mine", authMiddleware, tdlController.getMine.bind(tdlController));
+// DELETE
+router.delete("/task", authMiddleware, tdlController.deleteTask); // Delete Task from TDL
 
-// Get by ID
-router.get("/:id", authMiddleware, tdlController.getById.bind(tdlController));
+// PUT
+router.put("/task", authMiddleware, tdlController.updateTask); // Update Task in TDL
+router.put("/date", authMiddleware, tdlController.updateWeddingDate); // Update Wedding Date
 
-// Delete Task
-router.delete("/task", authMiddleware, tdlController.deleteTask);
-
-// Get user tdl
-router.get("/user/:id", authMiddleware,tdlController.getByUser);
-
-// Add task
-router.post("/task", authMiddleware, tdlController.addTask);
-
-// Update task
-router.put("/task", authMiddleware, tdlController.updateTask);
-
-// Update wedding date
-router.put("/date",authMiddleware,tdlController.updateWeddingDate);
-
-// make task done
+// PATCH
+router.patch("/task/done", authMiddleware, tdlController.setTaskDone);// Mark Task Done
 
 export default router;
