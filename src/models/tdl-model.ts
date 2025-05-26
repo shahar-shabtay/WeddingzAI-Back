@@ -51,7 +51,6 @@ export interface ITDL extends Document {
     firstPartner:        string;
     secondPartner:       string;
     weddingDate:         string;
-    estimatedBudget:     string;
   };
   createdAt: Date;
   updatedAt: Date;
