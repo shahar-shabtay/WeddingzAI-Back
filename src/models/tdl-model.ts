@@ -1,27 +1,13 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-<<<<<<< HEAD
-const todoSchema = new Schema({
-  task: { type: String, required: true },
-  dueDate: { type: String },
-  priority: { type: String },
-  aiSent: { type: Boolean, default: false }
-}, { _id: false });
-
-const sectionSchema = new Schema({
-  sectionName: { type: String },
-  todos: [todoSchema]
-}, { _id: false });
-
-=======
 // A single to-do item with optional AI flag and completion status
 const todoSchema = new Schema({
   task:     { type: String, required: true },
   dueDate:  { type: String },
   priority: { type: String },
   aiSent:   { type: Boolean, default: false },
-  done:     { type: Boolean, default: false }       // ← new field to mark task as completed
-}, { _id: false });
+  done:     { type: Boolean, default: false }
+}, { _id: true });  // Ensure each todo has its own _id
 
 // A section grouping multiple to-dos
 const sectionSchema = new Schema({
@@ -30,61 +16,41 @@ const sectionSchema = new Schema({
 }, { _id: false });
 
 // Root TDL document, scoped to a user
->>>>>>> 3290df8 (Add crud for tdl)
 const tdlSchema = new Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   tdl: {
     weddingTodoListName: String,
-<<<<<<< HEAD
-    firstPartner: String,
-    secondPartner: String,
-    weddingDate: String,
-    estimatedBudget: String,
-    sections: [sectionSchema]
-=======
     firstPartner:        String,
     secondPartner:       String,
     weddingDate:         String,
     estimatedBudget:     String,
     sections:            [sectionSchema]
->>>>>>> 3290df8 (Add crud for tdl)
   }
 }, { timestamps: true });
+
+export interface ITodo {
+  _id: mongoose.Types.ObjectId;
+  task: string;
+  dueDate: string;
+  priority: string;
+  aiSent: boolean;
+  done: boolean;
+}
+
+export interface ISection {
+  sectionName: string;
+  todos: ITodo[];
+}
 
 export interface ITDL extends Document {
   userId: mongoose.Types.ObjectId;
   tdl: {
     weddingTodoListName: string;
-<<<<<<< HEAD
     firstPartner: string;
     secondPartner: string;
     weddingDate: string;
     estimatedBudget: string;
-    sections: Array<{
-      sectionName: string;
-      todos: Array<{
-        task: string;
-        dueDate: string;
-        priority: string;
-        aiSent: boolean;
-      }>
-    }>
-=======
-    firstPartner:        string;
-    secondPartner:       string;
-    weddingDate:         string;
-    estimatedBudget:     string;
-    sections: Array<{
-      sectionName: string;
-      todos: Array<{
-        task:     string;
-        dueDate:  string;
-        priority: string;
-        aiSent:   boolean;
-        done:     boolean;  
-      }>;
-    }>;
->>>>>>> 3290df8 (Add crud for tdl)
+    sections: ISection[];
   };
   createdAt: Date;
   updatedAt: Date;
