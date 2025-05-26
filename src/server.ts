@@ -17,6 +17,7 @@ import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
 import invitationRoutes from "./routes/invitation-routes";
+import menuRoutes from "./routes/menu-routes";
 
 
 const app = express();
@@ -48,6 +49,7 @@ app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
+app.use(`${apiBase}/menu`, menuRoutes);
 
 
 // Root route
