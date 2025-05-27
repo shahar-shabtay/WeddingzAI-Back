@@ -43,7 +43,7 @@ app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 app.use(`${apiBase}/budget`, budgetRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);
 app.use(apiBase, authRoutes);
-app.use(apiBase, detailsMatterRoutes);
+app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
