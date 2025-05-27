@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import tdlModel, { ITDL } from "../models/tdl-model";
 import userModel from "../models/user-model";
+import { endOfDay } from "date-fns"; // הוסף בתחילת הקובץ
+
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY as string;
@@ -15,12 +17,12 @@ export function getSectionName(weddingDate: Date, taskDate: Date): string {
   const msInDay = 1000 * 60 * 60 * 24;
   const diffDays = Math.floor((weddingDate.getTime() - taskDate.getTime()) / msInDay);
 
-  if (diffDays >= 335) return "12 Months Before";           // 11–12+ months
-  if (diffDays >= 270) return "9–12 Months Before";         // 9–11 months
-  if (diffDays >= 180) return "6–9 Months Before";          // 6–9 months
-  if (diffDays >= 90)  return "3–6 Months Before";          // 3–6 months
-  if (diffDays >= 30)  return "1–3 Months Before";          // 1–3 months
-  if (diffDays >= 1)   return "1–4 Weeks Before";           // 1–4 weeks
+  if (diffDays >= 335) return "12 Months Before";
+  if (diffDays >= 270) return "9–12 Months Before";
+  if (diffDays >= 180) return "6–9 Months Before";
+  if (diffDays >= 90)  return "3–6 Months Before";
+  if (diffDays >= 30)  return "1–3 Months Before";
+  if (diffDays >= 1)   return "1–4 Weeks Before";
   return "Wedding Day";
 }
 
@@ -215,7 +217,8 @@ export async function updateTask(
   todo.dueDate = updatedDueDate;
   todo.priority = updates.priority ?? todo.priority;
   todo.done = updates.done ?? todo.done;
-
+  todo.aiSent = false;
+  
   if (foundSection.sectionName !== newSectionName) {
     // ➕ Move todo to the new section
     foundSection.todos = foundSection.todos.filter(t => t._id.toString() !== todoId);
@@ -257,47 +260,48 @@ export async function updateWeddingDateWithAI(
   const doc = await tdlModel.findOne({ userId });
   if (!doc) throw new Error("TDL not found for user");
 
-  // Assume original tasks were based on "default" date: today + 18 months
-  const originalCreationDate = new Date(doc.createdAt);
-  const defaultWeddingDate = new Date(originalCreationDate);
-  defaultWeddingDate.setMonth(defaultWeddingDate.getMonth() + 18);
-
   const newWeddingDate = new Date(newWeddingDateStr);
   if (isNaN(newWeddingDate.getTime())) throw new Error("Invalid wedding date format");
 
-  const allTodos: any[] = [];
+  const getDefaultDueDate = (sectionName: string, weddingDate: Date): string => {
+    const date = new Date(weddingDate);
+    switch (sectionName) {
+      case "12 Months Before":
+        date.setMonth(date.getMonth() - 12);
+        break;
+      case "9–12 Months Before":
+        date.setMonth(date.getMonth() - 10);
+        break;
+      case "6–9 Months Before":
+        date.setMonth(date.getMonth() - 8);
+        break;
+      case "3–6 Months Before":
+        date.setMonth(date.getMonth() - 4);
+        break;
+      case "1–3 Months Before":
+        date.setMonth(date.getMonth() - 2);
+        break;
+      case "1–4 Weeks Before":
+        date.setDate(date.getDate() - 21);
+        break;
+      case "Wedding Day":
+        break;
+      default:
+        break;
+    }
+    return date.toISOString().slice(0, 10);
+  };
 
   for (const section of doc.tdl.sections) {
     for (const todo of section.todos) {
-      const oldDueDate = new Date(todo.dueDate);
-      if (isNaN(oldDueDate.getTime())) continue;
-
-      // Calculate the difference between task and default wedding date
-      const offsetMs = defaultWeddingDate.getTime() - oldDueDate.getTime();
-
-      // Apply the same offset to the new wedding date
-      const newDueDate = new Date(newWeddingDate.getTime() - offsetMs);
-
-      const sectionName = getSectionName(newWeddingDate, newDueDate);
-
-      allTodos.push({
-        ...JSON.parse(JSON.stringify(todo)),
-        dueDate: newDueDate.toISOString().slice(0, 10),
-        sectionName
-      });
+      todo.dueDate = getDefaultDueDate(section.sectionName, newWeddingDate);
+      todo.aiSent = false;
     }
-  }
-
-  // Clear and reassign todos to correct sections
-  doc.tdl.sections.forEach(sec => (sec.todos = []));
-  for (const todo of allTodos) {
-    const section = doc.tdl.sections.find(s => s.sectionName === todo.sectionName);
-    if (section) section.todos.push(todo);
+    section.todos.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   }
 
   doc.tdl.weddingDate = newWeddingDateStr;
   doc.markModified("tdl.sections");
-
   await userModel.findByIdAndUpdate(userId, { weddingDate: newWeddingDateStr });
   return doc.save();
 }

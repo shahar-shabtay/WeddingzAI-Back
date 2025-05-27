@@ -304,11 +304,16 @@ export class VendorService {
     const type = this.analyzeVendorType(task.task);
     if (!type) continue;
 
+    const searchField = type.searchField || "about";
     const vendors = await VendorModel.find({ vendorType: type.name });
-    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+    const descriptions = vendors.map((v, i) => {
+      const value = (v as any)[searchField] || "";
+      return `Vendor ${i + 1}: ${v.name}\n${searchField}: ${value}`;
+    }).join("\n");
 
     const prompt = `
-      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on their "${searchField}" field.
       Return a JSON array of the vendor names that best fit the task.
 
       ${descriptions}
@@ -323,7 +328,6 @@ export class VendorService {
       if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
       if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
 
-      // Skip meaningless response
       const lowerContent = aiContent.toLowerCase();
       if (
         lowerContent.includes("none of the vendors") ||
@@ -331,7 +335,6 @@ export class VendorService {
         lowerContent.includes("no vendors matched")
       ) continue;
 
-      // Attempt to parse JSON
       let selectedNames: string[] = [];
       try {
         const parsed = JSON.parse(aiContent);
@@ -340,10 +343,10 @@ export class VendorService {
         } else if (Array.isArray(parsed.vendors)) {
           selectedNames = parsed.vendors;
         } else {
-          continue; // Unexpected structure, skip silently
+          continue;
         }
       } catch {
-        continue; // JSON parse failed, skip silently
+        continue;
       }
 
       if (selectedNames.length === 0) continue;
@@ -351,12 +354,80 @@ export class VendorService {
       const matched = vendors.filter((v) => selectedNames.includes(v.name));
       results.push(...matched);
     } catch {
-      continue; // Gemini error (e.g. quota), silently ignore
+      continue;
     }
   }
 
   return results;
 }
+
+//   async getRelevantVendorsByTDL(userId: string): Promise<IVendor[]> {
+//   const tdl = await tdlModel.findOne({ userId }).lean();
+//   if (!tdl || !Array.isArray(tdl.tdl?.sections)) return [];
+
+//   const relevantTasks = tdl.tdl.sections
+//     .flatMap((s: any) => s.todos)
+//     .filter((t: any) => t.aiSent === true);
+
+//   const results: IVendor[] = [];
+
+//   for (const task of relevantTasks) {
+//     const type = this.analyzeVendorType(task.task);
+//     if (!type) continue;
+
+//     const vendors = await VendorModel.find({ vendorType: type.name });
+//     const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+//     const prompt = `
+//       Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+//       Return a JSON array of the vendor names that best fit the task.
+
+//       ${descriptions}
+//     `;
+
+//     try {
+//       const result = await model.generateContent(prompt);
+//       let aiContent = result.response.text().trim();
+
+//       if (!aiContent) continue;
+
+//       if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
+//       if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
+
+//       // Skip meaningless response
+//       const lowerContent = aiContent.toLowerCase();
+//       if (
+//         lowerContent.includes("none of the vendors") ||
+//         lowerContent.includes("no suitable vendors") ||
+//         lowerContent.includes("no vendors matched")
+//       ) continue;
+
+//       // Attempt to parse JSON
+//       let selectedNames: string[] = [];
+//       try {
+//         const parsed = JSON.parse(aiContent);
+//         if (Array.isArray(parsed)) {
+//           selectedNames = parsed;
+//         } else if (Array.isArray(parsed.vendors)) {
+//           selectedNames = parsed.vendors;
+//         } else {
+//           continue; // Unexpected structure, skip silently
+//         }
+//       } catch {
+//         continue; // JSON parse failed, skip silently
+//       }
+
+//       if (selectedNames.length === 0) continue;
+
+//       const matched = vendors.filter((v) => selectedNames.includes(v.name));
+//       results.push(...matched);
+//     } catch {
+//       continue; // Gemini error (e.g. quota), silently ignore
+//     }
+//   }
+
+//   return results;
+// }
 
   async getUserVendors(userId: string): Promise<IVendor[]> {
     const user = await userModel.findById(userId).populate("myVendors");
