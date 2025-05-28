@@ -1,5 +1,7 @@
 import axios from 'axios';
+import path from 'path';
 import Invitation, { IInvitation } from '../models/invitation-model';
+import { saveImageFromUrl } from '../utils/save-image';
 
 export class InvitationService {
   async generateImage(prompt: string): Promise<string> {
@@ -28,16 +30,16 @@ export class InvitationService {
     );
 
     const imageUrl = response.data.data[0].url;
-    if (!imageUrl) {
-      throw new Error('No image URL returned from DALL·E');
-    }
-
+    if (!imageUrl) throw new Error('No image URL returned from DALL·E');
     return imageUrl;
   }
 
   async createInvitation(userId: string, prompt: string): Promise<IInvitation> {
-    const imageUrl = await this.generateImage(prompt);
-    return await Invitation.create({ userId, prompt, imageUrl });
+    const dalleImageUrl = await this.generateImage(prompt);
+    const savePath = path.join(__dirname, '..', 'uploads', 'invitations', `${userId}.png`);
+    await saveImageFromUrl(dalleImageUrl, savePath, true);
+    const relativeImageUrl = `/uploads/invitations/${userId}.png`;
+    return await Invitation.create({ userId, prompt, imageUrl: relativeImageUrl });
   }
 }
 
