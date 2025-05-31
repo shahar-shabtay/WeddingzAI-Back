@@ -147,6 +147,36 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
 
+  async getUserBookedVendors(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        this.sendError(res, new Error("Unauthorized"), 401);
+        return;
+      }
+  
+      const user = await userModel
+        .findById(userId)
+        .populate('bookedVendors.vendorId') // populate vendorId references
+        .lean();
+  
+      if (!user || !user.bookedVendors || user.bookedVendors.length === 0) {
+        this.sendSuccess(res, [], "No booked vendors found");
+        return;
+      }
+  
+      const bookedVendorsWithDetails = user.bookedVendors.map((entry: any) => ({
+        vendorType: entry.vendorType,
+        vendor: entry.vendorId, // this is the populated vendor object
+      }));
+  
+      this.sendSuccess(res, bookedVendorsWithDetails, "Fetched booked vendors");
+    } catch (err: any) {
+      this.sendError(res, err, 500);
+    }
+  }
+  
+
   async refetchRelevantVendors(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?._id?.toString(); // or req.userId
