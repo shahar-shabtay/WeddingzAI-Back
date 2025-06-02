@@ -30,14 +30,23 @@ class TablesController extends BaseController<ITable> {
         if (guest.tableId) {
           const tableId = guest.tableId.toString();
           tableOccupancy[tableId] =
-            (tableOccupancy[tableId] || 0) + (guest.numberOfGuests || 1);
+            (tableOccupancy[tableId] || 0) + (guest.numberOfGuests ?? 1);
         }
       });
 
-      const availableTables = tables.filter((table) => {
-        const occupied = tableOccupancy[table._id.toString()] || 0;
-        return table.capacity - occupied >= guestCount;
-      });
+      const availableTables = tables
+        .filter((table) => {
+          const occupied = tableOccupancy[table._id.toString()] || 0;
+          const freeSeats = table.capacity - occupied;
+          return freeSeats >= guestCount;
+        })
+        .map((table) => {
+          const occupied = tableOccupancy[table._id.toString()] || 0;
+          return {
+            ...table.toObject(),
+            freeSeats: table.capacity - occupied,
+          };
+        });
 
       res
         .status(200)
@@ -51,6 +60,21 @@ class TablesController extends BaseController<ITable> {
       });
     }
   };
+
+  public async getMine(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = this.getUserId(req);
+      if (!userId) throw new Error("Unauthorized");
+
+      const tables = await this.model.find({ userId }).populate("guests");
+      console.log("Tables fetched from DB (getMine):", tables);
+
+      this.sendSuccess(res, tables, "Tables with guests fetched successfully");
+    } catch (err: any) {
+      const status = err.message === "Unauthorized" ? 401 : 400;
+      this.sendError(res, err, status);
+    }
+  }
 }
 
 export default new TablesController();
