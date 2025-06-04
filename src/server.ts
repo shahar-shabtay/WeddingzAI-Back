@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
-
+import fs from 'fs';
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
 import path from 'path';
@@ -41,6 +41,11 @@ app.use((req, res, next) => {
 
 // Static files
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
+
+const uploadDir = path.join(__dirname, "../uploads/menus/backgrounds");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 // Routes
 app.use(`${apiBase}/budget`, budgetRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);

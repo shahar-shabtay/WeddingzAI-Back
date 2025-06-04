@@ -77,4 +77,17 @@ export class BaseController<T> {
       this.sendError(res, err, 400);
     }
   }
+
+  async updateItem(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const doc = await this.model.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!doc) {
+        res.status(404).json({ error: 'Not found' });
+        return;
+      }
+      res.json(doc);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  }
 }
