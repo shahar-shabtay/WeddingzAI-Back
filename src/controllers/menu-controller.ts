@@ -7,7 +7,6 @@ import Menu, { IMenu } from "../models/menu-model";
 import menuService from "../services/menu-service";
 import { BaseController } from "./base-controller";
 import { AuthRequest } from "../common/auth-middleware";
-import {downloadImageToServer} from "../common/file-upload";
 
 export class MenuController extends BaseController<IMenu> {
   constructor() {
@@ -32,37 +31,66 @@ export class MenuController extends BaseController<IMenu> {
 
 
   async createMenuWithBackground(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const { userId, coupleNames, designPrompt, backgroundUrl } = req.body;
+    try {
+      const { userId, coupleNames, designPrompt, backgroundUrl } = req.body;
 
-    if (!userId || !coupleNames || !designPrompt || !backgroundUrl) {
-      res.status(400).json({ error: "Missing fields" });
+      if (!userId || !coupleNames || !designPrompt || !backgroundUrl) {
+        res.status(400).json({ error: "Missing fields" });
+      }
+
+      // יוצרים את התפריט במסד הנתונים עם הנתיב לשרת
+      const menu = await menuService.createOrUpdateMenuWithBackground(
+        userId,
+        coupleNames,
+        designPrompt,
+        backgroundUrl
+      );
+
+      res.status(201).json(menu);
+    } catch (error) {
+      console.error("createMenuWithBackground error:", error);
+      res.status(500).json({ error: "Failed to create menu with background" });
+    }
+  }
+
+  async updateDishesByUserId(req: Request, res: Response): Promise<void> {
+  try {
+    const userId = req.params.userId;
+    const dishes = req.body.dishes;
+
+    if (!userId || !Array.isArray(dishes)) {
+      res.status(400).json({ error: 'Missing userId or invalid dishes' });
+      return;
     }
 
-    // מגדירים את התיקייה ושם הקובץ לשמירה
-    const folderPath = path.join(__dirname, "../../uploads/menus/backgrounds");
-    const fileName = `${userId}.png`;
+    const menu = await menuService.updateDishesByUserId(userId, dishes);
 
-    // מורידים ושומרים את התמונה לשרת
-    const localImagePath = await downloadImageToServer(backgroundUrl, folderPath, fileName);
+    if (!menu) {
+      res.status(404).json({ error: 'Menu not found' });
+      return;
+    }
 
-    // אם תרצה, ניתן לשמור רק את הנתיב היחסי ב־DB (למשל ללא __dirname)
-    const relativePath = `/uploads/menus/backgrounds/${fileName}`;
-
-    // יוצרים את התפריט במסד הנתונים עם הנתיב לשרת
-    const menu = await menuService.createMenuWithBackground(
-      userId,
-      coupleNames,
-      designPrompt,
-      relativePath
-    );
-
-    res.status(201).json(menu);
+    res.json(menu);
   } catch (error) {
-    console.error("createMenuWithBackground error:", error);
-    res.status(500).json({ error: "Failed to create menu with background" });
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update dishes' });
   }
 }
+
+  async getMenuByUserId(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.params.userId;
+      const menu = await menuService.getMenuByUserId(userId);
+      if (!menu) {
+        res.status(404).json({ error: "Menu not found" });
+        return;
+      }
+      res.json(menu);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Menu not found";
+      res.status(404).json({ error: message });
+    }
+  }
 
 
 }

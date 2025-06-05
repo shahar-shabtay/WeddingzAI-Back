@@ -10,4 +10,6 @@ router.use(authMiddleware);
 
 router.post("/background", menuController.generateBackground);
 router.post("/create-menu", menuController.createMenuWithBackground);
+router.get("/user/:userId", menuController.getMenuByUserId);
+router.put('/user/:userId/dishes', menuController.updateDishesByUserId);
 export default router;

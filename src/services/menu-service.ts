@@ -19,7 +19,7 @@ class MenuService {
                 "The prompt should request a background only (no text or letters), " +
                 "with a large white rectangle in the center of the image sized 1000 pixels wide by 900 pixels tall," +
                 " with a 25 pixel thick border around the rectangle. The rectangle and border should be centered vertically and horizontally." +
-                "The rest of the image should have a delicate floral background with soft pastel colors, leaving plenty of space around the rectangle. "+
+                "leaving plenty of space around the rectangle. "+
                 "Do not add any text or letters inside or around the rectangle."
             },
             {
@@ -83,9 +83,37 @@ class MenuService {
     }
   }
 
-  async createMenuWithBackground(userId: string, coupleNames: string,designPrompt: string,backgroundUrl: string): Promise<IMenu> {
-    const newMenu = new Menu({userId,coupleNames,designPrompt,backgroundUrl,dishes: [],});
-    return newMenu.save();
+  async createOrUpdateMenuWithBackground(
+    userId: string,
+    coupleNames: string,
+    designPrompt: string,
+    backgroundUrl: string
+  ): Promise<IMenu> {
+    const existingMenu = await Menu.findOne({ userId });
+
+    if (existingMenu) {
+      // Update existing menu
+      existingMenu.coupleNames = coupleNames;
+      existingMenu.designPrompt = designPrompt;
+      existingMenu.backgroundUrl = backgroundUrl;
+      // Optionally reset dishes or other fields if needed
+      return existingMenu.save();
+    } else {
+      // Create new menu
+      return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
+    }
+  }
+
+  async updateDishesByUserId(userId: string, dishes: IDish[]) {
+  return await Menu.findOneAndUpdate(
+    { userId },
+    { dishes },
+    { new: true }
+  );
+}
+
+  async getMenuByUserId(userId: string): Promise<IMenu | null> {
+    return await Menu.findOne({ userId });
   }
 }
 
