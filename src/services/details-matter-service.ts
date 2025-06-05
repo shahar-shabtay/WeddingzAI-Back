@@ -1,5 +1,5 @@
-import { RateLimitError } from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { OpenAI, RateLimitError } from 'openai';
 
 export interface SongSuggestion {
   title: string;
@@ -8,46 +8,69 @@ export interface SongSuggestion {
   link: string;
 }
 
-const apiKey = process.env.GOOGLE_API_KEY as string;
-const genAI  = new GoogleGenerativeAI(apiKey);
-const model  = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const api = new OpenAI({
+  apiKey: process.env.AIMLAPI_KEY,
+  baseURL: process.env.AIMLAPI_URL,
+});
 
-const systemPrompt = `You are a wedding music expert. Given a user's wedding style and preferences, suggest 3 songs that would be perfect for their wedding.
+const systemPrompt = `You are a wedding music expert. Given a user's wedding style and preferences, suggest 3 songs that would be perfect for their wedding. 
 For each song, provide:
 1. Title (song name)
 2. Artist
-3. Link (YouTube link if possible)
+3. Description (explanation of why it fits their style)
+4. Link (YouTube link if possible)
 
-**Respond with raw JSON only**, do **not** wrap in markdown or code fences.
-Bring only songs in english.
-Your output must be a JSON array, e.g.:
-
+Format your response as a JSON array with these fields:
 [
   {
     "title": "Song Name",
     "artist": "Artist Name",
+    "description": "Why this song fits",
     "link": "https://youtube.com/..."
-  },
-  … two more …
-]`;
+  }
+]
+
+Important:
+- Each suggestion should be unique and tailored to the user's specific request
+- The description should clearly connect the song to the user's preferences
+- Try to find actual YouTube links for the songs
+- If you can't find a YouTube link, leave the link field empty
+- Make sure the response is valid JSON`;
+
+
 
 export async function suggestSongsFromAI(prompt: string): Promise<SongSuggestion[]> {
-  const fullPrompt = `${systemPrompt}\nUser: ${prompt}`;
-
+  if (!prompt) {
+    console.log('❌ [Details Matter] Missing prompt');
+    throw new Error('No promt insert');
+  } 
   try {
-    const result  = await model.generateContent(fullPrompt);
-    const rawResp = result.response;
-    const text    = await rawResp.text();      // raw string, no fences
+    const completion = await api.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
 
-    // guard empty
-    if (!text) throw new Error('Empty response from AI');
+      const response = completion.choices[0].message.content;
+      if (!response) {
+        console.log('❌ [Details Matter] No content in AI response');
+        throw new Error('No content in AI response');
+      }
 
-    // parse JSON
-    const songs = JSON.parse(text) as SongSuggestion[];
-    return songs;
+      const songs = JSON.parse(response) as SongSuggestion[];
+      return songs;
 
   } catch (err) {
-    // let controller handle rate‐limit specially
     if (err instanceof RateLimitError) throw err;
     console.error('AI service error:', err);
     throw new Error(err instanceof Error ? err.message : String(err));
