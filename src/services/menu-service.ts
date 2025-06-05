@@ -3,6 +3,7 @@ import axios from "axios";
 import Menu, { IMenu, IDish } from "../models/menu-model";
 
 class MenuService {
+  // Send user prompt to chat to get new prompt for Dall e
   async getPromptFromGPT(userInput: string): Promise<string> {
     console.log("[MenuService.getPromptFromGPT] Received input:", userInput);
     try {
@@ -14,11 +15,12 @@ class MenuService {
             {
               role: "system",
               content:
-                "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds. " +
-                "The prompt should request a background only (no text or letters), with a blank space in the center " +
-                "for menu text, in the user's desired style. Leave a large white rectangle in the center of the image, " +
-                "approximately 700x500 pixels in size, aligned vertically. Do not set a background around the menu design; " +
-                "I need this for use as the background of a menu, but you don’t add text or letters!",
+                "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds." +
+                "The prompt should request a background only (no text or letters), " +
+                "with a large white rectangle in the center of the image sized 1000 pixels wide by 900 pixels tall," +
+                " with a 25 pixel thick border around the rectangle. The rectangle and border should be centered vertically and horizontally." +
+                "The rest of the image should have a delicate floral background with soft pastel colors, leaving plenty of space around the rectangle. "+
+                "Do not add any text or letters inside or around the rectangle."
             },
             {
               role: "user",
@@ -28,7 +30,7 @@ class MenuService {
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.DALLE_TOKEN}`,
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
         }
@@ -46,6 +48,7 @@ class MenuService {
     }
   }
 
+  // Send the prompt to dall e to get background
   async generateImageViaGPT(userInput: string): Promise<string> {
     console.log("[MenuService.generateImageViaGPT] Starting image generation for:", userInput);
     try {
@@ -80,16 +83,9 @@ class MenuService {
     }
   }
 
-  async createMenu(userId: string, coupleNames: string, designPrompt: string, backgroundUrl: string): Promise<IMenu> {
-    return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
-  }
-
-  async updateDishes(userId: string, dishes: IDish[]): Promise<IMenu | null> {
-    return Menu.findByIdAndUpdate(userId, { dishes }, { new: true });
-  }
-
-  async saveMenuFiles(userId: string, pngBase64: string, pdfBase64: string): Promise<IMenu | null> {
-    return Menu.findByIdAndUpdate(userId, { finalPng: pngBase64, finalPdf: pdfBase64 }, { new: true });
+  async createMenuWithBackground(userId: string, coupleNames: string,designPrompt: string,backgroundUrl: string): Promise<IMenu> {
+    const newMenu = new Menu({userId,coupleNames,designPrompt,backgroundUrl,dishes: [],});
+    return newMenu.save();
   }
 }
 
