@@ -57,7 +57,7 @@ function createEmail(to: string, subject: string, html: string): string {
 
 function createRSVPLink(type: 'yes' | 'no' | 'maybe', guestId: string, token: string): string {
   const domainBase = process.env.DOMAIN_BASE || "http://localhost:4000";
-  return `${domainBase}/api/rsvp?guestId=${guestId}&token=${token}&response=${type}`;
+  return `${domainBase}/api/guests/rsvp?guestId=${guestId}&token=${token}&response=${type}`;
 }
 
 async function loadInvitationMessage(

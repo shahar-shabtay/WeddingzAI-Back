@@ -202,7 +202,7 @@ class GuestsController extends BaseController<IGuest> {
       } else {
         const templatePath = path.join(
           __dirname,
-          "../templates/rsvp-respone.html"
+          "../templates/rsvp-response.html"
         );
         let html = await fs.readFile(templatePath, "utf8");
 

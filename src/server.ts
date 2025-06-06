@@ -9,8 +9,8 @@ import "./queue/Vendors-Queue";
 import mongoose from "mongoose";
 
 // Routes
-import tdlRoutes from "./routes/tdl-routes";
 import authRoutes from "./routes/auth-routes";
+import tdlRoutes from "./routes/tdl-routes";
 import guestRoutes from "./routes/guest-routes";
 import detailsMatterRoutes from "./routes/details-matter-routes";
 import vendorsRoute from "./routes/vendor_routes";
@@ -45,14 +45,14 @@ app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 app.use("/static", express.static(path.join(__dirname, "./static")));
 
 // API routes
+app.use(`${apiBase}/guests`, guestRoutes);
+app.use(apiBase, authRoutes); 
 app.use(`${apiBase}/budget`, budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);
-app.use(apiBase, authRoutes);
 app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
-app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
 app.use(`${apiBase}/menu`, menuRoutes);
