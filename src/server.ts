@@ -18,6 +18,8 @@ import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
 import tableRoutes from "./routes/table-route";
 import invitationRoutes from "./routes/invitation-routes";
+import menuRoutes from "./routes/menu-routes";
+import calendarRoutes from "./routes/calendar-routes";
 
 const app = express();
 
@@ -46,12 +48,15 @@ app.use("/static", express.static(path.join(__dirname, "./static")));
 app.use(`${apiBase}/budget`, budgetRoutes);
 app.use(apiBase, tdlRoutes);
 app.use(`${apiBase}/tables`, tableRoutes);
+app.use(`${apiBase}/tdl`, tdlRoutes);
 app.use(apiBase, authRoutes);
-app.use(apiBase, detailsMatterRoutes);
+app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
 app.use(apiBase, guestRoutes);
 app.use(apiBase, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
+app.use(`${apiBase}/menu`, menuRoutes);
+app.use(`${apiBase}/calendar`, calendarRoutes);
 
 // Root route
 app.get("/", (req: Request, res: Response) => {

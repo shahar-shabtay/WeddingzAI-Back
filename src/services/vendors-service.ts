@@ -9,7 +9,7 @@ import openai from "../common/openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // or "gemini-1.0-pro", etc.
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
 
 export interface VendorResearchResult {
@@ -304,11 +304,16 @@ export class VendorService {
     const type = this.analyzeVendorType(task.task);
     if (!type) continue;
 
+    const searchField = type.searchField || "about";
     const vendors = await VendorModel.find({ vendorType: type.name });
-    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+    const descriptions = vendors.map((v, i) => {
+      const value = (v as any)[searchField] || "";
+      return `Vendor ${i + 1}: ${v.name}\n${searchField}: ${value}`;
+    }).join("\n");
 
     const prompt = `
-      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on their "${searchField}" field.
       Return a JSON array of the vendor names that best fit the task.
 
       ${descriptions}
@@ -323,7 +328,6 @@ export class VendorService {
       if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
       if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
 
-      // Skip meaningless response
       const lowerContent = aiContent.toLowerCase();
       if (
         lowerContent.includes("none of the vendors") ||
@@ -331,7 +335,6 @@ export class VendorService {
         lowerContent.includes("no vendors matched")
       ) continue;
 
-      // Attempt to parse JSON
       let selectedNames: string[] = [];
       try {
         const parsed = JSON.parse(aiContent);
@@ -340,10 +343,10 @@ export class VendorService {
         } else if (Array.isArray(parsed.vendors)) {
           selectedNames = parsed.vendors;
         } else {
-          continue; // Unexpected structure, skip silently
+          continue;
         }
       } catch {
-        continue; // JSON parse failed, skip silently
+        continue;
       }
 
       if (selectedNames.length === 0) continue;
@@ -351,18 +354,79 @@ export class VendorService {
       const matched = vendors.filter((v) => selectedNames.includes(v.name));
       results.push(...matched);
     } catch {
-      continue; // Gemini error (e.g. quota), silently ignore
+      continue;
     }
   }
 
   return results;
 }
 
-async getUserVendors(userId: string): Promise<IVendor[]> {
-  const user = await userModel.findById(userId).populate("myVendors");
-  if (!user || !Array.isArray(user.myVendors)) return [];
-  return user.myVendors as IVendor[];
+  async getUserVendors(userId: string): Promise<IVendor[]> {
+    const user = await userModel.findById(userId).populate("myVendors");
+    if (!user || !Array.isArray(user.myVendors)) return [];
+    return user.myVendors as IVendor[];
+  }
+
+// src/services/vendor-service.ts
+async toggleBookedVendor(userId: string, vendorId: string): Promise<{
+  added: boolean;
+  message: string;
+  vendorType?: string;
+}> {
+  const user = await userModel.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const vendor = await VendorModel.findById(vendorId);
+  if (!vendor) throw new Error("Vendor not found");
+
+  const alreadyBooked = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object'
+      ? bv.vendorId.toString() === vendorId
+      : bv.toString() === vendorId
+  );
+
+  if (alreadyBooked) {
+    user.bookedVendors = user.bookedVendors.filter((bv: any) =>
+      typeof bv === 'object'
+        ? bv.vendorId.toString() !== vendorId
+        : bv.toString() !== vendorId
+    );
+    await user.save();
+    return { added: false, message: "UNBOOKED" };
+  }
+
+  const sameTypeExists = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object' && bv.vendorType === vendor.vendorType
+  );
+
+  if (sameTypeExists) {
+    return {
+      added: false,
+      message: "TYPE_ALREADY_BOOKED",
+      vendorType: vendor.vendorType,
+    };
+  }
+
+  user.bookedVendors.push({ vendorId, vendorType: vendor.vendorType });
+  await user.save();
+  return { added: true, message: "BOOKED", vendorType: vendor.vendorType };
 }
+
+  // vendor-service.ts
+  async cancelBookedVendor(userId: string, vendorId: string): Promise<boolean> {
+    const user = await userModel.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const index = user.bookedVendors.findIndex((v: any) =>
+      v.vendorId.toString() === vendorId
+    );
+
+    if (index === -1) return false; // not booked
+
+    user.bookedVendors.splice(index, 1);
+    await user.save();
+    return true;
+  }
 
 }
 

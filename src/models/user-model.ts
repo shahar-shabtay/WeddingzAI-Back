@@ -11,6 +11,10 @@ export interface IUser {
   avatar?: string;
   is_premium?: boolean;
   myVendors: IVendor[];
+  bookedVendors: {
+    vendorId: string;
+    vendorType: string;
+  }[];
   weddingDate?: string;
   weddingVenue?: string;
 }
@@ -60,6 +64,17 @@ const userSchema = new mongoose.Schema<IUser>({
     ref: "Vendor", // this must match your Vendor model name
     default: [],
   }],
+  bookedVendors: [{
+  vendorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Vendor",
+    required: true,
+  },
+  vendorType: {
+    type: String,
+    required: true,
+  }
+}],
   weddingDate: {
     type: String,
     required: false,

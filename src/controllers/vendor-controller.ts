@@ -24,10 +24,10 @@ export class VendorController extends BaseController<IVendor> {
         return;
       }
       
-      console.log(`[VendorController] Starting background research for query: "${query}"`);
-      await vendorQueue.add({ query, userId });      
-      res.status(200).json({
-        message: "Research started in background",
+            console.log(`[VendorController] Queuing background research for query: "${query}"`);
+      await vendorQueue.add({ query, userId });
+      res.status(202).json({
+        message: "Research job queued",
         success: true,
         vendorType: "pending"
       });
@@ -101,53 +101,143 @@ export class VendorController extends BaseController<IVendor> {
   }
 }
 
-async getVendorSummary(req: AuthRequest, res: Response): Promise<void> {
+  async getVendorSummary(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const user = await userModel.findById(userId).populate("myVendors").lean();
+      if (!user || !user.myVendors || !Array.isArray(user.myVendors)) {
+        res.status(200).json({ total: 0, counts: {} });
+        return;
+      }
+
+      const counts: Record<string, number> = {};
+      user.myVendors.forEach((v: any) => {
+        counts[v.vendorType] = (counts[v.vendorType] || 0) + 1;
+      });
+
+      res.status(200).json({ total: user.myVendors.length, counts });
+    } catch (err) {
+      console.error("[VendorController] Error in getVendorSummary", err);
+      res.status(500).json({ error: "Failed to load vendor summary" });
+    }
+  }
+
+  async getUserVendors(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        this.sendError(res, new Error("Unauthorized"), 401);
+        return;
+      }
+
+      const user = await userModel.findById(userId).populate('myVendors').lean();
+      if (!user || !user.myVendors) {
+        this.sendSuccess(res, [], "No vendors found");
+        return;
+      }
+
+      this.sendSuccess(res, user.myVendors, "Fetched user vendors");
+    } catch (err: any) {
+      this.sendError(res, err, 500);
+    }
+  }
+
+  async getUserBookedVendors(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      if (!userId) {
+        this.sendError(res, new Error("Unauthorized"), 401);
+        return;
+      }
+  
+      const user = await userModel
+        .findById(userId)
+        .populate('bookedVendors.vendorId') // populate vendorId references
+        .lean();
+  
+      if (!user || !user.bookedVendors || user.bookedVendors.length === 0) {
+        this.sendSuccess(res, [], "No booked vendors found");
+        return;
+      }
+  
+      const bookedVendorsWithDetails = user.bookedVendors.map((entry: any) => ({
+        vendorType: entry.vendorType,
+        vendor: entry.vendorId, // this is the populated vendor object
+      }));
+  
+      this.sendSuccess(res, bookedVendorsWithDetails, "Fetched booked vendors");
+    } catch (err: any) {
+      this.sendError(res, err, 500);
+    }
+  }
+  
+
+  async refetchRelevantVendors(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id?.toString(); // or req.userId
+      if (!userId) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const vendors = await vendorService.getRelevantVendorsByTDL(userId);
+      res.status(200).json({ success: true, data: vendors });
+    } catch (err) {
+      console.error("[VendorController] refetchRelevantVendors:", err);
+      res.status(500).json({ error: "Failed to fetch relevant vendors" });
+    }
+  }
+
+async toggleBooked(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?._id;
-    if (!userId) {
-      res.status(401).json({ error: "Unauthorized" });
+    const { vendorId } = req.body;
+
+    if (!userId || !vendorId) {
+      res.status(400).json({ success: false, error: "Missing user or vendor ID" });
       return;
     }
 
-    const user = await userModel.findById(userId).populate("myVendors").lean();
-    if (!user || !user.myVendors || !Array.isArray(user.myVendors)) {
-      res.status(200).json({ total: 0, counts: {} });
-      return;
-    }
+    const result = await vendorService.toggleBookedVendor(userId, vendorId);
 
-    const counts: Record<string, number> = {};
-    user.myVendors.forEach((v: any) => {
-      counts[v.vendorType] = (counts[v.vendorType] || 0) + 1;
+    res.status(200).json({
+      success: true,
+      ...result, // includes added, message, vendorType
     });
-
-    res.status(200).json({ total: user.myVendors.length, counts });
-  } catch (err) {
-    console.error("[VendorController] Error in getVendorSummary", err);
-    res.status(500).json({ error: "Failed to load vendor summary" });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      error: err.message || "Internal server error"
+    });
   }
 }
 
-async getUserVendors(req: AuthRequest, res: Response): Promise<void> {
+  async cancelBook(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?._id;
-    if (!userId) {
-      this.sendError(res, new Error("Unauthorized"), 401);
+    const { vendorId } = req.body;
+
+    if (!userId || !vendorId) {
+      res.status(400).json({ success: false, error: "Missing user or vendor ID" });
       return;
     }
 
-    const user = await userModel.findById(userId).populate('myVendors').lean();
-    if (!user || !user.myVendors) {
-      this.sendSuccess(res, [], "No vendors found");
+    const removed = await vendorService.cancelBookedVendor(userId, vendorId);
+    if (!removed) {
+      res.status(404).json({ success: false, message: "Vendor not booked" });
       return;
     }
 
-    this.sendSuccess(res, user.myVendors, "Fetched user vendors");
+    res.status(200).json({ success: true, message: "Booking canceled" });
   } catch (err: any) {
-    this.sendError(res, err, 500);
+    res.status(500).json({ success: false, error: err.message });
   }
 }
-
-
   
 }
 
