@@ -3,7 +3,7 @@ dotenv.config();
 
 import express, { Application, Request, Response, Express } from "express";
 import cors from "cors";
-import path from 'path';
+import path from "path";
 import "./queue/Vendors-Queue";
 
 import mongoose from "mongoose";
@@ -16,12 +16,13 @@ import detailsMatterRoutes from "./routes/details-matter-routes";
 import vendorsRoute from "./routes/vendor_routes";
 import budgetRoutes from "./routes/budget_routes";
 import fileRoutes from "./routes/file-routes";
+import tableRoutes from "./routes/table-route";
 import invitationRoutes from "./routes/invitation-routes";
 import menuRoutes from "./routes/menu-routes";
 import calendarRoutes from "./routes/calendar-routes";
 
-
 const app = express();
+
 const apiBase = "/api";
 
 // CORS
@@ -40,9 +41,13 @@ app.use((req, res, next) => {
 });
 
 // Static files
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
-// Routes
+app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
+app.use("/static", express.static(path.join(__dirname, "./static")));
+
+// API routes
 app.use(`${apiBase}/budget`, budgetRoutes);
+app.use(apiBase, tdlRoutes);
+app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);
 app.use(apiBase, authRoutes);
 app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
@@ -52,7 +57,6 @@ app.use(apiBase, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
 app.use(`${apiBase}/menu`, menuRoutes);
 app.use(`${apiBase}/calendar`, calendarRoutes);
-
 
 // Root route
 app.get("/", (req: Request, res: Response) => {
@@ -67,6 +71,10 @@ app.get("/", (req: Request, res: Response) => {
     project: "WeddingZai Server",
   });
 });
+
+// app.listen(PORT, () => {
+// console.log(`Server running on http://localhost:${PORT}`);
+// });
 
 const initApp = async () => {
   return new Promise<Express>((resolve, reject) => {
@@ -86,7 +94,6 @@ const initApp = async () => {
         resolve(app);
       });
     }
-
   });
 };
 

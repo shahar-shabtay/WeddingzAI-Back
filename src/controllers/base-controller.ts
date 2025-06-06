@@ -23,7 +23,24 @@ export class BaseController<T> {
   //  Sends a standardized error response.
   protected sendError(res: Response, error: any, code = 500) {
     console.error("Controller Error:", error);
-    return res.status(code).json({ error: error?.message || "Unexpected error" });
+    return res
+      .status(code)
+      .json({ error: error?.message || "Unexpected error" });
+  }
+
+  /**
+   * POST / — create new document with user ID
+   */
+  async createItem(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = this.getUserId(req);
+      if (!userId) throw new Error("Unauthorized");
+      const newItem = await this.model.create({ ...req.body, userId: userId });
+      this.sendSuccess(res, newItem, "Created");
+    } catch (err: any) {
+      const status = err.message === "Unauthorized" ? 401 : 400;
+      this.sendError(res, err, status);
+    }
   }
 
   //  GET /    — list all documents
@@ -73,6 +90,26 @@ export class BaseController<T> {
     try {
       const result = await this.model.findByIdAndDelete(req.params.id);
       this.sendSuccess(res, result);
+    } catch (err: any) {
+      this.sendError(res, err, 400);
+    }
+  }
+
+  /**
+   * PATCH /:id — update a document by its ID
+   */
+  async updateItem(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const updated = await this.model.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+      if (!updated) {
+        this.sendError(res, new Error("Not found"), 404);
+        return;
+      }
+      this.sendSuccess(res, updated, "Updated");
     } catch (err: any) {
       this.sendError(res, err, 400);
     }
