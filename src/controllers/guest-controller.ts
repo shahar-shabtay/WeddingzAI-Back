@@ -54,7 +54,8 @@ class GuestsController extends BaseController<IGuest> {
 
       res.status(201).json({ message: "Guest created", data: newGuest });
     } catch (err) {
-      next(err);
+      console.error("create error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -86,7 +87,8 @@ class GuestsController extends BaseController<IGuest> {
 
       res.status(200).json({ message: "Guest updated", data: updatedGuest });
     } catch (err) {
-      next(err);
+      console.error("update error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -113,7 +115,8 @@ class GuestsController extends BaseController<IGuest> {
 
       res.status(200).json({ message: "Guest deleted", data: deleted });
     } catch (err) {
-      next(err);
+      console.error("remove error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -163,7 +166,8 @@ class GuestsController extends BaseController<IGuest> {
 
       res.status(200).json({ message: "Invitations sent to all guests" });
     } catch (err) {
-      next(err);
+      console.error("sendInvitation error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -202,7 +206,7 @@ class GuestsController extends BaseController<IGuest> {
       } else {
         const templatePath = path.join(
           __dirname,
-          "../templates/rsvp-respone.html"
+          "../templates/rsvp-response.html"
         );
         let html = await fs.readFile(templatePath, "utf8");
 
@@ -219,7 +223,7 @@ class GuestsController extends BaseController<IGuest> {
         res.send(html);
       }
     } catch (err) {
-      console.error("RSVP render error:", err);
+      console.error("rsvpResponse error:", err);
       res.status(500).send("Something went wrong.");
     }
   };
@@ -257,11 +261,8 @@ class GuestsController extends BaseController<IGuest> {
 
       res.status(200).json({ message: "Guest assigned to table", data: guest });
     } catch (err) {
-      console.error("Error assigning guest:", err);
-      const error = err as Error;
-      res
-        .status(400)
-        .json({ message: "Error assigning guest", error: error.message });
+      console.error("assignGuestToTable error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 
@@ -303,11 +304,8 @@ class GuestsController extends BaseController<IGuest> {
         .status(200)
         .json({ message: "Guest unassigned from table", data: guest });
     } catch (err) {
-      console.error("Error unassigning guest:", err);
-      const error = err as Error;
-      res
-        .status(400)
-        .json({ message: "Error unassigning guest", error: error.message });
+      console.error("unassignGuest error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   };
 }

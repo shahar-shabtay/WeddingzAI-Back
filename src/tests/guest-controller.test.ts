@@ -4,7 +4,6 @@ import express, { Express } from "express";
 import guestRoutes from "../routes/guest-routes";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import guestModel from "../models/guest-model";
 
 dotenv.config();
 
