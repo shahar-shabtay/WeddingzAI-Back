@@ -93,29 +93,6 @@ async function loadInvitationMessage(
     .replace(/{{rsvpMaybeLink}}/g, createRSVPLink('maybe', guestId, rsvpToken));
 }
 
-export async function sendInvitationEmail(
-  to: string,
-  guestName: string,
-  guestId: string,
-  rsvpToken: string,
-  partner1: string,
-  partner2: string,
-  weddingDate?: string,
-  venue?: string
-) {
-  const auth = await getOAuth2Client();
-  const gmail = google.gmail({ version: "v1", auth });
-
-  const subject = `💌 Save the Date: ${partner1} ❤️ ${partner2} Are Getting Married!`;
-  const message = await loadInvitationMessage(partner1, partner2, guestName, guestId, rsvpToken, weddingDate, venue);
-  const raw = createEmail(to, subject, message);
-
-  await gmail.users.messages.send({
-    userId: "me",
-    requestBody: { raw },
-  });
-}
-
 interface GuestInfo {
   email: string;
   fullName: string;
