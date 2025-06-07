@@ -1,65 +1,167 @@
 // src/services/menu-service.ts
-import axios from 'axios';
-import Menu, { IMenu } from '../models/menu-model';
+import axios from "axios";
+import Menu, { IMenu, IDish } from "../models/menu-model";
+import fs from "fs";
+import path from "path";
 
-export class MenuService {
-  async generateImage(prompt: string, dishes: Array<{name: string, description: string}>, coupleNames: string): Promise<string> {
-    const dishesText = dishes.map(dish => `${dish.name}: ${dish.description}`).join('\n');
-    
-    const enhancedPrompt = `Create a wedding menu design. ${prompt}
-    Couple Names: ${coupleNames}
-    Menu Items:
-    ${dishesText}
-    
-    Important guidelines:
-    - Keep the design clean and casual
-    - Make sure all dishes are easy to read
-    - Use clear, readable typography
-    - Keep the layout simple and organized
-    - Focus on making the menu items stand out
-    - Use wedding-appropriate colors and elements
-    - Ensure all dishes are clearly visible and accurately listed
-    - Maintain a professional and sophisticated look
-    - Avoid any non-wedding related elements`;
+interface FinalsData {
+  finalPng: string;
+  finalCanvasJson: string;
+}
+class MenuService {
+  // Send user prompt to chat to get new prompt for Dall e
+  async getPromptFromGPT(userInput: string): Promise<string> {
+    console.log("[MenuService.getPromptFromGPT] Received input:", userInput);
+    try {
+      const response = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: 
+              "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds. " +
+              "The prompt should request a wedding-themed background image with exact dimensions of 1050 pixels wide by 950 pixels tall. " +
+              "In this image, there must be a white rectangle in the very center measuring exactly 1000 pixels wide by 900 pixels tall, " +
+              "surrounded by a uniform 25-pixel-thick border so that only a 25-pixel margin remains on each side. " +
+              "Ensure the white rectangle and its border fill almost the entire canvas, leaving minimal space around. " +
+              "Do not include any text or letters inside or around the rectangle."
 
-    const response = await axios.post(
-      `${process.env.DALLE_URL}`,
-      {
-        model: 'dall-e-3',
-        prompt: enhancedPrompt,
-        n: 1,
-        size: '1024x1024',
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.DALLE_TOKEN}`,
-          'Content-Type': 'application/json',
+            },
+            {
+              role: "user",
+              content: userInput,
+            },
+          ],
         },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const result = response.data.choices?.[0]?.message?.content?.trim();
+      console.log("[MenuService.getPromptFromGPT] Prompt from GPT:", result);
+      if (!result) {
+        throw new Error("OpenAI returned empty prompt");
       }
-    );
-
-    const imageUrl = response.data.data[0].url;
-    if (!imageUrl) {
-      throw new Error('No image URL returned from DALL·E');
+      return result;
+    } catch (error: any) {
+      console.error("[MenuService.getPromptFromGPT] Error:", error?.message || error);
+      throw error;
     }
-
-    return imageUrl;
   }
 
-  async createMenu(
-    userId: string, 
-    coupleNames: string, 
-    designPrompt: string, 
-    dishes: Array<{name: string, description: string}>
+  // Send the prompt to dall e to get background
+  async generateImageViaGPT(userInput: string): Promise<string> {
+    console.log("[MenuService.generateImageViaGPT] Starting image generation for:", userInput);
+    try {
+      const dallEPrompt = await this.getPromptFromGPT(userInput);
+      console.log("[MenuService.generateImageViaGPT] DALL·E Prompt:", dallEPrompt);
+
+      const response = await axios.post(
+        `${process.env.DALLE_URL}`,
+        {
+          model: "dall-e-3",
+          prompt: `${dallEPrompt}, No text, No letters, No words!`,
+          n: 1,
+          size: "1024x1024",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.DALLE_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const imageUrl = response.data.data?.[0]?.url;
+      console.log("[MenuService.generateImageViaGPT] Image URL:", imageUrl);
+      if (!imageUrl) {
+        throw new Error("No image URL returned from DALL·E");
+      }
+      return imageUrl;
+    } catch (error: any) {
+      console.error("[MenuService.generateImageViaGPT] Error:", error?.message || error);
+      throw error;
+    }
+  }
+
+  async createOrUpdateMenuWithBackground(
+    userId: string,
+    coupleNames: string,
+    designPrompt: string,
+    backgroundUrl: string
   ): Promise<IMenu> {
-    const imageUrl = await this.generateImage(designPrompt, dishes, coupleNames);
-    return await Menu.create({ 
-      userId, 
-      coupleNames, 
-      designPrompt, 
-      dishes, 
-      imageUrl 
-    });
+    const existingMenu = await Menu.findOne({ userId });
+
+    if (existingMenu) {
+      // Update existing menu
+      existingMenu.coupleNames = coupleNames;
+      existingMenu.designPrompt = designPrompt;
+      existingMenu.backgroundUrl = backgroundUrl;
+      // Optionally reset dishes or other fields if needed
+      return existingMenu.save();
+    } else {
+      // Create new menu
+      return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
+    }
+  }
+
+  async updateDishesByUserId(userId: string, dishes: IDish[]) {
+  return await Menu.findOneAndUpdate(
+    { userId },
+    { dishes },
+    { new: true }
+  );
+}
+
+  async getMenuByUserId(userId: string): Promise<IMenu | null> {
+    return await Menu.findOne({ userId });
+  }
+
+  async updateFinals(userId: string, finals: FinalsData) {
+    // המרת base64 ל-buffer
+    const matches = finals.finalPng.match(/^data:image\/png;base64,(.+)$/);
+    if (!matches) {
+      throw new Error("Invalid PNG data");
+    }
+    const base64Data = matches[1];
+    const imgBuffer = Buffer.from(base64Data, "base64");
+
+    // יצירת תיקיות
+    const userDir = path.join(__dirname, "../uploads/menu", userId);
+    
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir);
+
+    // שמירת PNG
+    const pngFilename = `final.png`;
+    const pngPath = path.join(userDir, pngFilename);
+    fs.writeFileSync(pngPath, imgBuffer);
+
+    // שמירת JSON
+    const canvasFilename = `canvas.json`;
+    const canvasPath = path.join(userDir, canvasFilename);
+    fs.writeFileSync(canvasPath, JSON.stringify(finals.finalCanvasJson, null, 2));
+
+    // נתיבים יחסיים לבסיס uploads
+    const relativePngPath = path.relative(path.join(__dirname, "../../uploads"), pngPath).replace(/\\/g, "/");
+    const relativeCanvasPath = path.relative(path.join(__dirname, "../../uploads"), canvasPath).replace(/\\/g, "/");
+
+    // עדכון במסד
+    const menu = await Menu.findOneAndUpdate(
+      { userId },
+      {
+        finalPng: relativePngPath,
+        finalCanvasJson: relativeCanvasPath,
+      },
+      { new: true, upsert: true }
+    );
+
+    return menu;
   }
 }
 
