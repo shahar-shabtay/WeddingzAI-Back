@@ -7,6 +7,7 @@ import Menu, { IMenu } from "../models/menu-model";
 import menuService from "../services/menu-service";
 import { BaseController } from "./base-controller";
 import { AuthRequest } from "../common/auth-middleware";
+import { saveImageLocally } from "../common/file-upload";
 
 export class MenuController extends BaseController<IMenu> {
   constructor() {
@@ -30,26 +31,32 @@ export class MenuController extends BaseController<IMenu> {
   }
 
 
-  async createMenuWithBackground(req: AuthRequest, res: Response): Promise<void> {
+  async createMenuWithBackground(req: Request, res: Response): Promise<void> {
+    const { userId, backgroundUrl, coupleNames, designPrompt } = req.body;
+
+    if (!userId || !backgroundUrl) {
+      res.status(400).json({ message: "Missing userId or image URL" });
+      return;
+    }
+
     try {
-      const { userId, coupleNames, designPrompt, backgroundUrl } = req.body;
+      // הגדרת נתיב שמירה מקומי מלא
+      const saveDir = path.join(process.cwd(), `/uploads/menu/${userId}`);
 
-      if (!userId || !coupleNames || !designPrompt || !backgroundUrl) {
-        res.status(400).json({ error: "Missing fields" });
-      }
+      const publicPathPrefix = `/uploads/menu/${userId}/background.png`;
+      const filename = `background.png`;
+      const localImagePath = await saveImageLocally(backgroundUrl, saveDir, publicPathPrefix, filename);
 
-      // יוצרים את התפריט במסד הנתונים עם הנתיב לשרת
       const menu = await menuService.createOrUpdateMenuWithBackground(
         userId,
         coupleNames,
         designPrompt,
-        backgroundUrl
+        publicPathPrefix
       );
-
-      res.status(201).json(menu);
+      res.json({ message: "Menu created with background", backgroundUrl: localImagePath });
     } catch (error) {
-      console.error("createMenuWithBackground error:", error);
-      res.status(500).json({ error: "Failed to create menu with background" });
+      console.error("Error creating menu with background:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 
@@ -92,7 +99,27 @@ export class MenuController extends BaseController<IMenu> {
     }
   }
 
+  async updateFinals(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { finals } = req.body;
 
+      if (!finals || !finals.finalPng || !finals.finalCanvasJson) {
+        res.status(400).json({ error: "Missing final data" });
+        return;
+      }
+
+      const updatedMenu = await menuService.updateFinals(userId, finals);
+
+      res.json({ success: true, menu: updatedMenu });
+      return;
+    } catch (error) {
+      console.error("Error saving finals:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+      return;
+    }
+  }
 }
 
 export default new MenuController();
+

@@ -1,37 +1,35 @@
 import axios from "axios";
-import fs from "fs";
+import fs from "fs-extra";
 import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
-export async function downloadImageToServer(
+
+export async function saveImageLocally(
   imageUrl: string,
-  folderPath: string,
-  fileName: string
+  saveDir: string,
+  imagePath: string,
+  filename: string
 ): Promise<string> {
   try {
-    // וודא שהתיקייה קיימת
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
+    // הורדת התמונה
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(response.data, "binary");
 
-    const filePath = path.join(folderPath, fileName);
+    // יצירת תיקייה אם לא קיימת
+    await fs.ensureDir(saveDir);
 
-    // מוריד את התמונה
-    const response = await axios({
-      method: "GET",
-      url: imageUrl,
-      responseType: "stream",
-    });
+    // יצירת שם ייחודי לקובץ
+    const filepath = path.join(saveDir, filename);
 
-    // שומר את התמונה בקובץ
-    const writer = fs.createWriteStream(filePath);
-    response.data.pipe(writer);
+    // שמירת התמונה לתיקייה
+    await fs.writeFile(filepath, buffer);
 
-    return new Promise((resolve, reject) => {
-      writer.on("finish", () => resolve(filePath)); // מחזיר נתיב מלא במערכת
-      writer.on("error", reject);
-    });
+    console.log(`Image saved locally at: ${filepath}`);
+
+    // החזרת הנתיב היחסי לשימוש ב-frontend
+    return `${imagePath}/${filename}`;
   } catch (error) {
-    console.error("Error downloading image:", error);
+    console.error("Error saving image locally:", error);
     throw error;
   }
 }

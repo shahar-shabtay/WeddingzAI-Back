@@ -1,4 +1,4 @@
-export interface VendorType {
+                export interface VendorType {
   name: string;          
   keywords: string[];    
   listingUrl: string;    

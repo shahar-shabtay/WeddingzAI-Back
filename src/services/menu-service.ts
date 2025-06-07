@@ -1,7 +1,13 @@
 // src/services/menu-service.ts
 import axios from "axios";
 import Menu, { IMenu, IDish } from "../models/menu-model";
+import fs from "fs";
+import path from "path";
 
+interface FinalsData {
+  finalPng: string;
+  finalCanvasJson: string;
+}
 class MenuService {
   // Send user prompt to chat to get new prompt for Dall e
   async getPromptFromGPT(userInput: string): Promise<string> {
@@ -14,13 +20,14 @@ class MenuService {
           messages: [
             {
               role: "system",
-              content:
-                "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds." +
-                "The prompt should request a background only (no text or letters), " +
-                "with a large white rectangle in the center of the image sized 1000 pixels wide by 900 pixels tall," +
-                " with a 25 pixel thick border around the rectangle. The rectangle and border should be centered vertically and horizontally." +
-                "leaving plenty of space around the rectangle. "+
-                "Do not add any text or letters inside or around the rectangle."
+              content: 
+              "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds. " +
+              "The prompt should request a wedding-themed background image with exact dimensions of 1050 pixels wide by 950 pixels tall. " +
+              "In this image, there must be a white rectangle in the very center measuring exactly 1000 pixels wide by 900 pixels tall, " +
+              "surrounded by a uniform 25-pixel-thick border so that only a 25-pixel margin remains on each side. " +
+              "Ensure the white rectangle and its border fill almost the entire canvas, leaving minimal space around. " +
+              "Do not include any text or letters inside or around the rectangle."
+
             },
             {
               role: "user",
@@ -59,7 +66,7 @@ class MenuService {
         `${process.env.DALLE_URL}`,
         {
           model: "dall-e-3",
-          prompt: `${dallEPrompt}, No text, No letters, No words! Leave in the center a big white space in rectangle shape`,
+          prompt: `${dallEPrompt}, No text, No letters, No words!`,
           n: 1,
           size: "1024x1024",
         },
@@ -114,6 +121,47 @@ class MenuService {
 
   async getMenuByUserId(userId: string): Promise<IMenu | null> {
     return await Menu.findOne({ userId });
+  }
+
+  async updateFinals(userId: string, finals: FinalsData) {
+    // המרת base64 ל-buffer
+    const matches = finals.finalPng.match(/^data:image\/png;base64,(.+)$/);
+    if (!matches) {
+      throw new Error("Invalid PNG data");
+    }
+    const base64Data = matches[1];
+    const imgBuffer = Buffer.from(base64Data, "base64");
+
+    // יצירת תיקיות
+    const userDir = path.join(__dirname, "../uploads/menu", userId);
+    
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir);
+
+    // שמירת PNG
+    const pngFilename = `final.png`;
+    const pngPath = path.join(userDir, pngFilename);
+    fs.writeFileSync(pngPath, imgBuffer);
+
+    // שמירת JSON
+    const canvasFilename = `canvas.json`;
+    const canvasPath = path.join(userDir, canvasFilename);
+    fs.writeFileSync(canvasPath, JSON.stringify(finals.finalCanvasJson, null, 2));
+
+    // נתיבים יחסיים לבסיס uploads
+    const relativePngPath = path.relative(path.join(__dirname, "../../uploads"), pngPath).replace(/\\/g, "/");
+    const relativeCanvasPath = path.relative(path.join(__dirname, "../../uploads"), canvasPath).replace(/\\/g, "/");
+
+    // עדכון במסד
+    const menu = await Menu.findOneAndUpdate(
+      { userId },
+      {
+        finalPng: relativePngPath,
+        finalCanvasJson: relativeCanvasPath,
+      },
+      { new: true, upsert: true }
+    );
+
+    return menu;
   }
 }
 

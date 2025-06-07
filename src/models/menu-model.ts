@@ -16,7 +16,7 @@ export interface IMenu extends Document {
   backgroundUrl: string;
   dishes: IDish[];
   finalPng?: string;
-  finalPdf?: string;
+  finalCanvasJson?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +40,7 @@ const menuSchema = new Schema<IMenu>(
     backgroundUrl: { type: String, required: true },
     dishes: { type: [dishSchema], default: [] },
     finalPng: { type: String },
-    finalPdf: { type: String },
+    finalCanvasJson: { type: String }, 
   },
   { timestamps: true }
 );
