@@ -5,7 +5,8 @@
   "scripts": {
     "prod": "cp .env.prod .env && npx tsc && node ./dist/app.js",
     "dev": "cp .env.dev .env && nodemon ./src/app.ts",
-    "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand"
+    "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand",
+    "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit auth.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "bullmq": "^5.52.2",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
+    "entities-decode": "^2.0.1",
     "express": "^4.21.2",
     "google-auth-library": "^9.15.1",
     "googleapis": "^148.0.0",
