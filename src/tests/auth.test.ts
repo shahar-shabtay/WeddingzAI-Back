@@ -3,6 +3,7 @@ import initApp from "../server";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { Express } from "express";
+import vendorQueue from "../queue/Vendors-Queue";
 
 import {
     testUser,
@@ -29,6 +30,7 @@ beforeAll(async () => {
 afterAll(async () => {
     console.log("afterAll");
     await mongoose.connection.close();
+    await vendorQueue.close();
 });
 
 describe("Authentication and Authorization Test Suite", () => {
@@ -51,6 +53,8 @@ describe("Authentication and Authorization Test Suite", () => {
       expect(response.statusCode).toBe(400);
       expect(response.body.message).toBe("Email already exists.");
     });
+
+    
 });
 
 
