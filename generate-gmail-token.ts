@@ -17,6 +17,35 @@ async function prompt(query: string): Promise<string> {
   }));
 }
 
+async function updateEnvFile(envPath: string, key: string, value: string) {
+  try {
+    let content = "";
+    try {
+      content = await fs.readFile(envPath, "utf8");
+    } catch {
+      // File may not exist yet, continue
+    }
+
+    const lines = content.split("\n").filter(line => line.trim().length > 0);
+    let found = false;
+
+    const newLines = lines.map(line => {
+      if (line.startsWith(`${key}=`)) {
+        found = true;
+        return `${key}=${value}`;
+      }
+      return line;
+    });
+
+    if (!found) newLines.push(`${key}=${value}`);
+
+    await fs.writeFile(envPath, newLines.join("\n") + "\n", "utf8");
+    console.log(`✅ Updated ${envPath}`);
+  } catch (err) {
+    console.error(`❌ Failed to update ${envPath}:`, err);
+  }
+}
+
 async function main() {
   const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
   const credentials = JSON.parse(credJSON).web;
@@ -44,8 +73,13 @@ async function main() {
   await fs.writeFile(TOKEN_PATH, JSON.stringify(tokens, null, 2));
   console.log(`✅ Tokens saved to ${TOKEN_PATH}`);
 
-  const refreshBase64 = Buffer.from(tokens.refresh_token!).toString("base64");
-  console.log(`🔐 .env entry:\nGMAIL_REFRESH_TOKEN_BASE64=${refreshBase64}`);
+  const refreshBase64 = Buffer.from(tokens.refresh_token).toString("base64");
+  console.log(`🔐 New .env value:\nGMAIL_REFRESH_TOKEN_BASE64=${refreshBase64}\n`);
+
+  const envFiles = [".env.dev", ".env.prod", ".env.tst"];
+  for (const envFile of envFiles) {
+    await updateEnvFile(path.join(__dirname, envFile), "GMAIL_REFRESH_TOKEN_BASE64", refreshBase64);
+  }
 }
 
 main().catch((err) => {
