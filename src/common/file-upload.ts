@@ -24,7 +24,6 @@ export async function saveImageLocally(
     // שמירת התמונה לתיקייה
     await fs.writeFile(filepath, buffer);
 
-    console.log(`Image saved locally at: ${filepath}`);
 
     // החזרת הנתיב היחסי לשימוש ב-frontend
     return `${imagePath}/${filename}`;

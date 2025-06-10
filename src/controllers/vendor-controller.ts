@@ -24,7 +24,6 @@ export class VendorController extends BaseController<IVendor> {
         return;
       }
       
-            console.log(`[VendorController] Queuing background research for query: "${query}"`);
       await vendorQueue.add({ query, userId });
       res.status(202).json({
         message: "Research job queued",
@@ -41,10 +40,8 @@ export class VendorController extends BaseController<IVendor> {
   async getByType(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { type } = req.params;
-      console.log(`[VendorController] Getting vendors by type: ${type}`);
       
       const vendors = await this.model.find({ vendorType: type });
-      console.log(`[VendorController] Found ${vendors.length} vendors of type: ${type}`);
       
       this.sendSuccess(res, vendors);
     } catch (err: any) {
@@ -56,7 +53,6 @@ export class VendorController extends BaseController<IVendor> {
   async search(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { query, type } = req.query;
-      console.log(`[VendorController] Searching vendors with query: "${query}" ${type ? `and type: ${type}` : ''}`);
       
       const filter: any = {};
       
@@ -69,7 +65,6 @@ export class VendorController extends BaseController<IVendor> {
       }
       
       const vendors = await this.model.find(filter);
-      console.log(`[VendorController] Search found ${vendors.length} vendors`);
       
       this.sendSuccess(res, vendors);
     } catch (err: any) {
@@ -109,7 +104,7 @@ export class VendorController extends BaseController<IVendor> {
         return;
       }
 
-      const user = await userModel.findById(userId).populate("myVendors").lean();
+      const user = await userModel.findById(userId).populate("myVendors");
       if (!user || !user.myVendors || !Array.isArray(user.myVendors)) {
         res.status(200).json({ total: 0, counts: {} });
         return;

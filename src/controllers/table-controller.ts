@@ -67,7 +67,6 @@ class TablesController extends BaseController<ITable> {
       if (!userId) throw new Error("Unauthorized");
 
       const tables = await this.model.find({ userId }).populate("guests");
-      console.log("Tables fetched from DB (getMine):", tables);
 
       this.sendSuccess(res, tables, "Tables with guests fetched successfully");
     } catch (err: any) {

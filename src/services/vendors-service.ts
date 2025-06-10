@@ -176,16 +176,12 @@ export class VendorService {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).exec();
 
-    console.log(
-      `[VendorService] Saved ${vendorType.name} "${saved.name}" (_id=${saved._id})`
-    );
     return saved;
   }
 
   // Process the entire vendor research workflow
   async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
   try {
-    console.log(`[VendorService] Analyzing query: "${userQuery}"`);
     const vendorType = this.analyzeVendorType(userQuery);
 
     if (!vendorType) {
@@ -196,8 +192,6 @@ export class VendorService {
         error: "Could not determine vendor type from your query. Please be more specific.",
       };
     }
-
-    console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
 
     // Mark aiSent=true in the matching TDL task
     try {
@@ -213,15 +207,12 @@ export class VendorService {
             const matchVendor = vendorType.name.toLowerCase();
 
             if (normalized.includes(matchQuery) || normalized.includes(matchVendor)) {
-              console.log(`[VendorService] Matched task: "${todo.task}"`);
 
               if (!todo.aiSent) {
                 todo.aiSent = true;
                 updated = true;
-                console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
                 break;
               } else {
-                console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
               }
             }
           }
@@ -231,7 +222,6 @@ export class VendorService {
         if (updated) {
           tdlDoc.markModified("tdl.sections");
           await tdlDoc.save();
-          console.log(`[VendorService] TDL document saved successfully`);
         }
       }
     } catch (err) {
@@ -266,12 +256,11 @@ export class VendorService {
     // ✅ Get relevant vendors using Gemini AI and save to user's myVendors field
     const relevantVendors = await this.getRelevantVendorsByTDL(userId);
     const vendorIds = relevantVendors.map((v) => v._id);
-
+    console.log(vendorIds);
     await userModel.findByIdAndUpdate(userId, {
       $addToSet: { myVendors: { $each: vendorIds } },
     });
 
-    console.log(`[VendorService] Saved ${vendorIds.length} relevant vendors to user ${userId}`);
 
     return {
       vendorType: vendorType.name,
