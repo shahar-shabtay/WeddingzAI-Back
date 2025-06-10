@@ -142,18 +142,6 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
 
-  async getAllVendors(req: AuthRequest, res: Response): Promise<void> {
-    try {
-
-      const vendors = await vendorService.getAllVendors();
-
-
-      this.sendSuccess(res, vendors, "Fetched vendors");
-    } catch (err: any) {
-      this.sendError(res, err, 500);
-    }
-  }
-
   async getUserBookedVendors(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?._id;

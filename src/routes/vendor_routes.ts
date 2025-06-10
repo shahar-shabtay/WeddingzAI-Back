@@ -9,8 +9,8 @@ router.use(authMiddleware);
 
 
 // GET
+router.get("/all", vendorController.getAll.bind(vendorController));
 router.get("/summary", vendorController.getVendorSummary); // Get all user vendor - summary
-router.get("/", vendorController.getAllVendors); // Get all vendors
 router.get('/mine',  vendorController.getUserVendors.bind(vendorController)); // get all user vendor - details
 router.get("/booked", vendorController.getUserBookedVendors.bind(vendorController)); // get all user booked vendors
 router.get("/relevant", vendorController.refetchRelevantVendors); // Update the relevant vendors for user
