@@ -57,9 +57,7 @@ const googleSignIn = async (req: Request, res: Response) => {
             });
         }
     } catch (error) {
-        res
-            .status(400)
-            .send({ message: "Google token verification failed", error });
+        res.status(400).send({ message: "Google token verification failed", error });
     }
 };
 
@@ -103,9 +101,7 @@ const register = async (req: Request, res: Response) => {
     }
 
     if (password.length < 6) {
-        res
-            .status(400)
-            .send({ message: "Password must be at least 6 characters long." });
+        res.status(400).send({ message: "Password must be at least 6 characters long." });
         return;
     }
 
@@ -203,7 +199,7 @@ const logout = async (req: Request, res: Response) => {
             try {
                 const user = await userModel.findOne({ _id: payload._id });
                 if (!user) {
-                    res.status(400).send({ message: "User Not Found" });
+                    res.status(400).send({ message: "User not found" });
                     return;
                 }
 
@@ -252,7 +248,7 @@ const refresh = async (req: Request, res: Response) => {
             try {
                 const user = await userModel.findOne({ _id: payload._id });
                 if (!user) {
-                    res.status(400).send({ message: "User Not Found" });
+                    res.status(400).send({ message: "User not found" });
                     return;
                 }
 
@@ -363,16 +359,9 @@ const getUserPremiumStatus = async (req: AuthRequest, res: Response) => {
             res.status(404).send({ message: "User not found" });
             return;
         }
-        if (user.is_premium) {
-            res.status(200).send({
-                message: "User is premium",
-                is_premium: true
-            });
-            return;
-        }
         res.status(200).send({
-            message: "User is not premium",
-            is_premium: false
+        message: user.is_premium ? "User is premium" : "User is not premium",
+        is_premium: Boolean(user.is_premium)
         });
     }
     catch (error) {
@@ -382,39 +371,6 @@ const getUserPremiumStatus = async (req: AuthRequest, res: Response) => {
 
 type TokenPayload = {
     _id: string;
-};
-
-// Old auth middleware
-const authMiddleware = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    const authorizationHeader = req.header("authorization");
-    const accessToken = authorizationHeader && authorizationHeader.split(" ")[1];
-
-    if (!accessToken) {
-        res.status(401).send({ message: "Access Denied" });
-        return;
-    }
-
-    if (!process.env.TOKEN_SECRET) {
-        res.status(500).send({ message: "Server Error" });
-        return;
-    }
-
-    jwt.verify(accessToken, process.env.TOKEN_SECRET, (err, data) => {
-        if (err) {
-            if (err.name === "TokenExpiredError") {
-                console.log("Access token expired");
-                return res.status(401).send({ message: "Token Expired" });
-            }
-            console.log("Invalid token:", err.message);
-            return res.status(403).send({ message: "Invalid Token" });
-        }
-        req.params.userId = (data as TokenPayload)._id;
-        next();
-    });
 };
 
 export default {
