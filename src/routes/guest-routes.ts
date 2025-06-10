@@ -6,44 +6,44 @@ const router = Router();
 
 // Public RSVP route
 router.get("/rsvp", guestsController.rsvpResponse);
-router.get("/guests/rsvp-response", guestsController.rsvpResponse);
-router.post("/guests/rsvp-response", guestsController.rsvpResponse);
+router.get("/rsvp-response", guestsController.rsvpResponse);
+router.post("/rsvp-response", guestsController.rsvpResponse);
 
 // Authenticated routes
 router.get(
-  "/guests",
+  "/",
   authMiddleware,
   guestsController.getAll.bind(guestsController)
 );
 router.get(
-  "/guests/mine",
+  "/mine",
   authMiddleware,
   guestsController.getMine.bind(guestsController)
 );
 router.get(
-  "/guests/:id",
+  "/:id",
   authMiddleware,
   guestsController.getById.bind(guestsController)
 );
 
-router.post("/guests", authMiddleware, guestsController.create);
+router.post("/", authMiddleware, guestsController.create);
 router.post(
-  "/guests/send-invitation",
+  "/send-invitation",
   authMiddleware,
   guestsController.sendInvitation
 );
 
-router.delete("/guests/:id", authMiddleware, guestsController.remove);
-router.put("/guests/:id", authMiddleware, guestsController.update);
+router.delete("/:id", authMiddleware, guestsController.remove);
+router.put("/:id", authMiddleware, guestsController.update);
 
 router.patch(
-  "/guests/assign",
+  "/assign",
   authMiddleware,
   guestsController.assignGuestToTable
 );
 
 router.patch(
-  "/guests/unassign",
+  "/unassign",
   authMiddleware,
   guestsController.unassignGuest
 );

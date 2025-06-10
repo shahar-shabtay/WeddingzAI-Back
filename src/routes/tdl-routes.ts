@@ -1,5 +1,3 @@
-// src/routes/tdl-routes.ts
-
 import express from "express";
 import multer from "multer";
 import authMiddleware from "../common/auth-middleware";
@@ -8,30 +6,28 @@ import tdlController from "../controllers/tdl-controller";
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// Create new
-router.post(
-  "/tdl/upload-form",
-  authMiddleware,
-  upload.single("file"),
-  (req, res, next) => tdlController.upload(req, res, next)
-);
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
-// List all
-router.get("/tdl", authMiddleware, (req, res) => tdlController.getAll(req, res));
 
-// List only mine
-router.get("/tdl/mine", authMiddleware, (req, res) => tdlController.getMine(req, res));
+// POST
+router.post("/upload-form",upload.single("file"),
+  (req, res, next) => tdlController.upload(req, res, next)); // Create new TDL.
+router.post("/task", tdlController.addTask); // Add Task to TDL
 
-// Get by ID
-router.get("/tdl/:id", authMiddleware, (req, res) =>
-  tdlController.getById(req, res)
-);
+// GET
+router.get("/", tdlController.getAll.bind(tdlController)); // Get all TDLs
+router.get("/mine", tdlController.getMine.bind(tdlController)); // Get user TDL
+router.get("/:id", tdlController.getById.bind(tdlController)); // Get by TDL by ID
 
-// Delete
-router.delete("/tdl/:id", authMiddleware, (req, res) =>
-  tdlController.deleteItem(req, res)
-);
+// DELETE
+router.delete("/task", tdlController.deleteTask); // Delete Task from TDL
 
-router.get("/tdl/user/:id", authMiddleware,tdlController.getByUser);
+// PUT
+router.put("/task", tdlController.updateTask); // Update Task in TDL
+router.put("/date", tdlController.updateWeddingDate); // Update Wedding Date
+
+// PATCH
+router.patch("/done", tdlController.setTaskDone);// Mark Task Done
 
 export default router;

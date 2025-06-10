@@ -5,7 +5,8 @@
   "scripts": {
     "prod": "cp .env.prod .env && npx tsc && node ./dist/app.js",
     "dev": "cp .env.dev .env && nodemon ./src/app.ts",
-    "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand"
+    "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand",
+    "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit auth.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +22,7 @@
     "bullmq": "^5.52.2",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
+    "entities-decode": "^2.0.1",
     "express": "^4.21.2",
     "google-auth-library": "^9.15.1",
     "googleapis": "^148.0.0",
@@ -33,6 +35,7 @@
     "nodemon": "^3.1.9",
     "open": "^10.1.2",
     "openai": "^4.97.0",
+    "path": "^0.12.7",
     "react-router-dom": "^7.4.0",
     "slugify": "^1.6.6"
   },
@@ -42,13 +45,16 @@
     "@types/bull": "^4.10.4",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
+    "@types/fs-extra": "^11.0.4",
     "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/mongoose": "^5.11.96",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.10",
     "@types/supertest": "^6.0.2",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "fs-extra": "^11.3.0",
     "jest": "^29.7.0",
     "supertest": "^7.1.0",
     "ts-jest": "^29.2.6",

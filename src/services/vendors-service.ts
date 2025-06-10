@@ -9,7 +9,7 @@ import openai from "../common/openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // or "gemini-1.0-pro", etc.
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 
 
 export interface VendorResearchResult {
@@ -176,16 +176,12 @@ export class VendorService {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).exec();
 
-    console.log(
-      `[VendorService] Saved ${vendorType.name} "${saved.name}" (_id=${saved._id})`
-    );
     return saved;
   }
 
   // Process the entire vendor research workflow
   async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
   try {
-    console.log(`[VendorService] Analyzing query: "${userQuery}"`);
     const vendorType = this.analyzeVendorType(userQuery);
 
     if (!vendorType) {
@@ -196,8 +192,6 @@ export class VendorService {
         error: "Could not determine vendor type from your query. Please be more specific.",
       };
     }
-
-    console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
 
     // Mark aiSent=true in the matching TDL task
     try {
@@ -213,15 +207,12 @@ export class VendorService {
             const matchVendor = vendorType.name.toLowerCase();
 
             if (normalized.includes(matchQuery) || normalized.includes(matchVendor)) {
-              console.log(`[VendorService] Matched task: "${todo.task}"`);
 
               if (!todo.aiSent) {
                 todo.aiSent = true;
                 updated = true;
-                console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
                 break;
               } else {
-                console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
               }
             }
           }
@@ -231,7 +222,6 @@ export class VendorService {
         if (updated) {
           tdlDoc.markModified("tdl.sections");
           await tdlDoc.save();
-          console.log(`[VendorService] TDL document saved successfully`);
         }
       }
     } catch (err) {
@@ -266,12 +256,11 @@ export class VendorService {
     // ✅ Get relevant vendors using Gemini AI and save to user's myVendors field
     const relevantVendors = await this.getRelevantVendorsByTDL(userId);
     const vendorIds = relevantVendors.map((v) => v._id);
-
+    console.log(vendorIds);
     await userModel.findByIdAndUpdate(userId, {
       $addToSet: { myVendors: { $each: vendorIds } },
     });
 
-    console.log(`[VendorService] Saved ${vendorIds.length} relevant vendors to user ${userId}`);
 
     return {
       vendorType: vendorType.name,
@@ -304,11 +293,16 @@ export class VendorService {
     const type = this.analyzeVendorType(task.task);
     if (!type) continue;
 
+    const searchField = type.searchField || "about";
     const vendors = await VendorModel.find({ vendorType: type.name });
-    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+    const descriptions = vendors.map((v, i) => {
+      const value = (v as any)[searchField] || "";
+      return `Vendor ${i + 1}: ${v.name}\n${searchField}: ${value}`;
+    }).join("\n");
 
     const prompt = `
-      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on their "${searchField}" field.
       Return a JSON array of the vendor names that best fit the task.
 
       ${descriptions}
@@ -323,7 +317,6 @@ export class VendorService {
       if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
       if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
 
-      // Skip meaningless response
       const lowerContent = aiContent.toLowerCase();
       if (
         lowerContent.includes("none of the vendors") ||
@@ -331,7 +324,6 @@ export class VendorService {
         lowerContent.includes("no vendors matched")
       ) continue;
 
-      // Attempt to parse JSON
       let selectedNames: string[] = [];
       try {
         const parsed = JSON.parse(aiContent);
@@ -340,10 +332,10 @@ export class VendorService {
         } else if (Array.isArray(parsed.vendors)) {
           selectedNames = parsed.vendors;
         } else {
-          continue; // Unexpected structure, skip silently
+          continue;
         }
       } catch {
-        continue; // JSON parse failed, skip silently
+        continue;
       }
 
       if (selectedNames.length === 0) continue;
@@ -351,18 +343,79 @@ export class VendorService {
       const matched = vendors.filter((v) => selectedNames.includes(v.name));
       results.push(...matched);
     } catch {
-      continue; // Gemini error (e.g. quota), silently ignore
+      continue;
     }
   }
 
   return results;
 }
 
-async getUserVendors(userId: string): Promise<IVendor[]> {
-  const user = await userModel.findById(userId).populate("myVendors");
-  if (!user || !Array.isArray(user.myVendors)) return [];
-  return user.myVendors as IVendor[];
+  async getUserVendors(userId: string): Promise<IVendor[]> {
+    const user = await userModel.findById(userId).populate("myVendors");
+    if (!user || !Array.isArray(user.myVendors)) return [];
+    return user.myVendors as IVendor[];
+  }
+
+// src/services/vendor-service.ts
+async toggleBookedVendor(userId: string, vendorId: string): Promise<{
+  added: boolean;
+  message: string;
+  vendorType?: string;
+}> {
+  const user = await userModel.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  const vendor = await VendorModel.findById(vendorId);
+  if (!vendor) throw new Error("Vendor not found");
+
+  const alreadyBooked = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object'
+      ? bv.vendorId.toString() === vendorId
+      : bv.toString() === vendorId
+  );
+
+  if (alreadyBooked) {
+    user.bookedVendors = user.bookedVendors.filter((bv: any) =>
+      typeof bv === 'object'
+        ? bv.vendorId.toString() !== vendorId
+        : bv.toString() !== vendorId
+    );
+    await user.save();
+    return { added: false, message: "UNBOOKED" };
+  }
+
+  const sameTypeExists = user.bookedVendors.some((bv: any) =>
+    typeof bv === 'object' && bv.vendorType === vendor.vendorType
+  );
+
+  if (sameTypeExists) {
+    return {
+      added: false,
+      message: "TYPE_ALREADY_BOOKED",
+      vendorType: vendor.vendorType,
+    };
+  }
+
+  user.bookedVendors.push({ vendorId, vendorType: vendor.vendorType });
+  await user.save();
+  return { added: true, message: "BOOKED", vendorType: vendor.vendorType };
 }
+
+  // vendor-service.ts
+  async cancelBookedVendor(userId: string, vendorId: string): Promise<boolean> {
+    const user = await userModel.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const index = user.bookedVendors.findIndex((v: any) =>
+      v.vendorId.toString() === vendorId
+    );
+
+    if (index === -1) return false; // not booked
+
+    user.bookedVendors.splice(index, 1);
+    await user.save();
+    return true;
+  }
 
 }
 

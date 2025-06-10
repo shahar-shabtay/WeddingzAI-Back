@@ -1,5 +1,6 @@
+// src/services/menu-service.ts
 import axios from "axios";
-import Invitation, { IInvitation, ISentence } from "../models/invitation-model";
+import Menu, { IMenu, IDish } from "../models/menu-model";
 import fs from "fs";
 import path from "path";
 
@@ -7,7 +8,7 @@ interface FinalsData {
   finalPng: string;
   finalCanvasJson: string;
 }
-class InvitationService {
+class MenuService {
   // Send user prompt to chat to get new prompt for Dall e
   async getPromptFromGPT(userInput: string): Promise<string> {
     try {
@@ -19,8 +20,12 @@ class InvitationService {
             {
               role: "system",
               content: 
-              "You are an assistant that writes prompts for DALL·E to create wedding invitation backgrounds. " +
-              "Do not include any text or letters inside no numbers."
+              "You are an assistant that writes prompts for DALL·E to create wedding menu backgrounds. " +
+              "The prompt should request a wedding-themed background image with exact dimensions of 1050 pixels wide by 950 pixels tall. " +
+              "In this image, there must be a white rectangle in the very center measuring exactly 1000 pixels wide by 900 pixels tall, " +
+              "surrounded by a uniform 25-pixel-thick border so that only a 25-pixel margin remains on each side. " +
+              "Ensure the white rectangle and its border fill almost the entire canvas, leaving minimal space around. " +
+              "Do not include any text or letters inside or around the rectangle."
 
             },
             {
@@ -43,7 +48,7 @@ class InvitationService {
       }
       return result;
     } catch (error: any) {
-      console.error("[InvitationService.getPromptFromGPT] Error:", error?.message || error);
+      console.error("[MenuService.getPromptFromGPT] Error:", error?.message || error);
       throw error;
     }
   }
@@ -75,49 +80,39 @@ class InvitationService {
       }
       return imageUrl;
     } catch (error: any) {
-      console.error("[InvitationService.generateImageViaGPT] Error:", error?.message || error);
+      console.error("[MenuService.generateImageViaGPT] Error:", error?.message || error);
       throw error;
     }
   }
 
-  async createOrUpdateInvitationWithBackground(
+  async createOrUpdateMenuWithBackground(
     userId: string,
     coupleNames: string,
     designPrompt: string,
-    backgroundUrl: string,
-    date: string,
-    venue: string,
-  ): Promise<IInvitation> {
-    const existingInvition = await Invitation.findOne({ userId });
+    backgroundUrl: string
+  ): Promise<IMenu> {
+    const existingMenu = await Menu.findOne({ userId });
 
-    if (existingInvition) {
-      existingInvition.coupleNames = coupleNames;
-      existingInvition.designPrompt = designPrompt;
-      existingInvition.backgroundUrl = backgroundUrl;
-      return existingInvition.save();
+    if (existingMenu) {
+      existingMenu.coupleNames = coupleNames;
+      existingMenu.designPrompt = designPrompt;
+      existingMenu.backgroundUrl = backgroundUrl;
+      return existingMenu.save();
     } else {
-      return Invitation.create({ userId, coupleNames, designPrompt, backgroundUrl, sentences: [] , date, venue});
+      return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
     }
   }
 
-  async updateSentencesByUserId(userId: string, sentences: ISentence[]) {
-  return await Invitation.findOneAndUpdate(
+  async updateDishesByUserId(userId: string, dishes: IDish[]) {
+  return await Menu.findOneAndUpdate(
     { userId },
-    { sentences },
-    { new: true }
-  );
-  }
-
-  async updateHoursByUserId(userId: string, ceremonyHour: string, receptionHour: string) {
-  return await Invitation.findOneAndUpdate(
-    { userId },
-    { ceremonyHour, receptionHour },
+    { dishes },
     { new: true }
   );
 }
 
-  async getInvitationByUserId(userId: string): Promise<IInvitation | null> {
-    return await Invitation.findOne({ userId });
+  async getMenuByUserId(userId: string): Promise<IMenu | null> {
+    return await Menu.findOne({ userId });
   }
 
   async updateFinals(userId: string, finals: FinalsData) {
@@ -129,7 +124,7 @@ class InvitationService {
     const base64Data = matches[1];
     const imgBuffer = Buffer.from(base64Data, "base64");
 
-    const userDir = path.join(__dirname, "../../uploads/invitation", userId);
+    const userDir = path.join(__dirname, "../../uploads/menu", userId);
     if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, {recursive: true});
 
     const pngFilename = `final.png`;
@@ -143,7 +138,7 @@ class InvitationService {
     const relativePngPath = path.relative(path.join(__dirname, "../uploads"), pngPath).replace(/\\/g, "/");
     const relativeCanvasPath = path.relative(path.join(__dirname, "../uploads"), canvasPath).replace(/\\/g, "/");
 
-    const invitation = await Invitation.findOneAndUpdate(
+    const menu = await Menu.findOneAndUpdate(
       { userId },
       {
         finalPng: relativePngPath,
@@ -152,8 +147,8 @@ class InvitationService {
       { new: true, upsert: true }
     );
 
-    return invitation;
+    return menu;
   }
 }
 
-export default new InvitationService();
+export default new MenuService();

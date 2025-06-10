@@ -9,7 +9,6 @@ const router = express.Router();
 
 // Set a default value if DOMAIN_BASE is not defined
 const base = process.env.DOMAIN_BASE;
-console.log(base);
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -33,8 +32,6 @@ router.post('/file', upload.single("file"), function (req, res) {
     }
 
     const fileUrl = `${base}/uploads/${req.file.filename}`;
-    console.log(`File uploaded: ${fileUrl}`);
-
     res.status(200).send({ url: fileUrl });
     
 });
