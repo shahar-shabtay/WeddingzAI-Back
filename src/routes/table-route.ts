@@ -13,7 +13,7 @@ router.get(
 );
 router.get("/:id", tableController.getById.bind(tableController));
 router.get("/", tableController.getAll.bind(tableController));
-router.delete("/:id", tableController.deleteItem.bind(tableController));
+router.delete("/:id", tableController.deleteTable.bind(tableController));
 router.post("/", tableController.createItem.bind(tableController));
 router.patch("/:id", tableController.updateItem.bind(tableController));
 

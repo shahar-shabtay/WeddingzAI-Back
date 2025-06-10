@@ -75,6 +75,41 @@ class TablesController extends BaseController<ITable> {
       this.sendError(res, err, status);
     }
   }
+
+  public async deleteTable(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = this.getUserId(req);
+      if (!userId) throw new Error("Unauthorized");
+
+      const tableId = req.params.id;
+
+      // Delete the table
+      const deletedTable = await this.model.findOneAndDelete({
+        _id: tableId,
+        userId,
+      });
+
+      if (!deletedTable) {
+        res.status(404).json({ message: "Table not found" });
+        return;
+      }
+
+      // Unassign guests from this table
+      await guestModel.updateMany(
+        { tableId, userId },
+        { $set: { tableId: null } }
+      );
+
+      this.sendSuccess(
+        res,
+        deletedTable,
+        "Table deleted and guests unassigned"
+      );
+    } catch (err: any) {
+      const status = err.message === "Unauthorized" ? 401 : 400;
+      this.sendError(res, err, status);
+    }
+  }
 }
 
 export default new TablesController();
