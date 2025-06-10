@@ -151,7 +151,17 @@ export class VendorService {
       min_guests: raw.min_guests || "",
       end_time: raw.end_time || "",
       seasons:raw.seasons || "",
-
+      weekend: raw.weekend || "",
+      serv_location:raw.serv_location || "",
+      shoot_type: raw.shoot_type || "",
+      check_in:  raw.check_in || "",
+      check_out: raw.check_out || "",
+      max_vendors: raw.max_vendors || "",
+      location_facilities: Array.isArray(raw.location_facilities) ? raw.location_facilities : [],
+      close_venues:  Array.isArray(raw.close_venues) ? raw.close_venues : [],
+      size_range:   raw.size_range || "",
+      accessorise:  raw.accessorise || "",
+      buy_options:  raw.buy_options || "",
       faqs: Array.isArray(raw.faqs) ? raw.faqs : [],
       reviews: Array.isArray(raw.brideReviews) ? raw.brideReviews: [],
       
@@ -176,12 +186,16 @@ export class VendorService {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).exec();
 
+    console.log(
+      `[VendorService] Saved ${vendorType.name} "${saved.name}" (_id=${saved._id})`
+    );
     return saved;
   }
 
   // Process the entire vendor research workflow
   async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
   try {
+    console.log(`[VendorService] Analyzing query: "${userQuery}"`);
     const vendorType = this.analyzeVendorType(userQuery);
 
     if (!vendorType) {
@@ -192,6 +206,8 @@ export class VendorService {
         error: "Could not determine vendor type from your query. Please be more specific.",
       };
     }
+
+    console.log(`[VendorService] Detected vendor type: ${vendorType.name}`);
 
     // Mark aiSent=true in the matching TDL task
     try {
@@ -207,12 +223,15 @@ export class VendorService {
             const matchVendor = vendorType.name.toLowerCase();
 
             if (normalized.includes(matchQuery) || normalized.includes(matchVendor)) {
+              console.log(`[VendorService] Matched task: "${todo.task}"`);
 
               if (!todo.aiSent) {
                 todo.aiSent = true;
                 updated = true;
+                console.log(`[VendorService] Marked aiSent=true for task: "${todo.task}"`);
                 break;
               } else {
+                console.log(`[VendorService] Task "${todo.task}" already marked aiSent=true`);
               }
             }
           }
@@ -222,6 +241,7 @@ export class VendorService {
         if (updated) {
           tdlDoc.markModified("tdl.sections");
           await tdlDoc.save();
+          console.log(`[VendorService] TDL document saved successfully`);
         }
       }
     } catch (err) {
@@ -229,7 +249,9 @@ export class VendorService {
     }
 
     // Fetch vendor URLs from listing
-    const vendorUrls = await this.findVendorUrls(vendorType);
+    console.log("findVendorUrls");
+      const vendorUrls = await this.findVendorUrls(vendorType);
+      console.log(vendorUrls);
     if (vendorUrls.length === 0) {
       return {
         vendorType: vendorType.name,
@@ -245,7 +267,9 @@ export class VendorService {
 
     for (const url of vendorsToProcess) {
       try {
+        console.log("save vendors");
         const vendor = await this.scrapeAndSaveVendor(url, vendorType);
+        console.log(vendor);
         const vendorId = vendor._id?.toString() || vendor.id?.toString() || "";
         scrapedVendors.push({ id: vendorId, name: vendor.name || "", url });
       } catch (err) {
@@ -256,11 +280,12 @@ export class VendorService {
     // ✅ Get relevant vendors using Gemini AI and save to user's myVendors field
     const relevantVendors = await this.getRelevantVendorsByTDL(userId);
     const vendorIds = relevantVendors.map((v) => v._id);
-    console.log(vendorIds);
+
     await userModel.findByIdAndUpdate(userId, {
       $addToSet: { myVendors: { $each: vendorIds } },
     });
 
+    console.log(`[VendorService] Saved ${vendorIds.length} relevant vendors to user ${userId}`);
 
     return {
       vendorType: vendorType.name,
@@ -293,16 +318,11 @@ export class VendorService {
     const type = this.analyzeVendorType(task.task);
     if (!type) continue;
 
-    const searchField = type.searchField || "about";
     const vendors = await VendorModel.find({ vendorType: type.name });
-
-    const descriptions = vendors.map((v, i) => {
-      const value = (v as any)[searchField] || "";
-      return `Vendor ${i + 1}: ${v.name}\n${searchField}: ${value}`;
-    }).join("\n");
+    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
 
     const prompt = `
-      Given the task: "${task.task}", select the most relevant vendors from the list below based on their "${searchField}" field.
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
       Return a JSON array of the vendor names that best fit the task.
 
       ${descriptions}
@@ -317,6 +337,7 @@ export class VendorService {
       if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
       if (aiContent.endsWith("```")) aiContent = aiContent.replace(/```$/, "").trim();
 
+      // Skip meaningless response
       const lowerContent = aiContent.toLowerCase();
       if (
         lowerContent.includes("none of the vendors") ||
@@ -324,6 +345,7 @@ export class VendorService {
         lowerContent.includes("no vendors matched")
       ) continue;
 
+      // Attempt to parse JSON
       let selectedNames: string[] = [];
       try {
         const parsed = JSON.parse(aiContent);
@@ -332,10 +354,10 @@ export class VendorService {
         } else if (Array.isArray(parsed.vendors)) {
           selectedNames = parsed.vendors;
         } else {
-          continue;
+          continue; // Unexpected structure, skip silently
         }
       } catch {
-        continue;
+        continue; // JSON parse failed, skip silently
       }
 
       if (selectedNames.length === 0) continue;
@@ -343,7 +365,7 @@ export class VendorService {
       const matched = vendors.filter((v) => selectedNames.includes(v.name));
       results.push(...matched);
     } catch {
-      continue;
+      continue; // Gemini error (e.g. quota), silently ignore
     }
   }
 
@@ -354,6 +376,11 @@ export class VendorService {
     const user = await userModel.findById(userId).populate("myVendors");
     if (!user || !Array.isArray(user.myVendors)) return [];
     return user.myVendors as IVendor[];
+  }
+
+  async getAllVendors(): Promise<IVendor[]> {
+    const vendors = await VendorModel.find();
+    return vendors as IVendor[];
   }
 
 // src/services/vendor-service.ts
