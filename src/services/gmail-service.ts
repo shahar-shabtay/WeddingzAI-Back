@@ -27,7 +27,6 @@ async function getOAuth2Client() {
     // 5. Force refresh access token immediately
     const { credentials: newToken } = await oAuth2Client.refreshAccessToken();
     oAuth2Client.setCredentials(newToken);
-    console.log("Gmail access token refreshed");
   } catch (error) {
     console.error("Failed to refresh Gmail token", error);
   }

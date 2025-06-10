@@ -242,15 +242,15 @@ export const VENDOR_TYPES: VendorType[] = [
 
         \`\`\`ts
         export interface Dj {
-        _id:           string;
-        name:          string;
-        coverImage?:   string;
-        profileImage?: string;
-        about?:        string;
-        price_include?:  string;
-        weedend?:     string;
-        serv_location?:         string;
-        eventImages?:  string[];
+        _id:            string;
+        name:           string;
+        coverImage?:    string;
+        profileImage?:  string;
+        about?:         string;
+        price_include?: string;
+        weedend?:       string;
+        serv_location?: string;
+        eventImages?:   string[];
         faqs?:         { question: string; answer: string }[];
         brideReviews?: { reviewer: string; date: string; comment: string }[];
         socialMedia?:  {

@@ -31,7 +31,6 @@ class BudgetController extends BaseController<IBudget> {
   }
 
   async getBudget(req: AuthRequest, res: Response) {
-    console.log("get budget------------");
     const userId = req.user?._id;
     if (!userId) {
       res.status(401).json({ message: "User not authenticated" });

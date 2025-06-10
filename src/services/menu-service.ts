@@ -11,7 +11,6 @@ interface FinalsData {
 class MenuService {
   // Send user prompt to chat to get new prompt for Dall e
   async getPromptFromGPT(userInput: string): Promise<string> {
-    console.log("[MenuService.getPromptFromGPT] Received input:", userInput);
     try {
       const response = await axios.post(
         "https://api.openai.com/v1/chat/completions",
@@ -44,7 +43,6 @@ class MenuService {
       );
 
       const result = response.data.choices?.[0]?.message?.content?.trim();
-      console.log("[MenuService.getPromptFromGPT] Prompt from GPT:", result);
       if (!result) {
         throw new Error("OpenAI returned empty prompt");
       }
@@ -57,10 +55,8 @@ class MenuService {
 
   // Send the prompt to dall e to get background
   async generateImageViaGPT(userInput: string): Promise<string> {
-    console.log("[MenuService.generateImageViaGPT] Starting image generation for:", userInput);
     try {
       const dallEPrompt = await this.getPromptFromGPT(userInput);
-      console.log("[MenuService.generateImageViaGPT] DALL·E Prompt:", dallEPrompt);
 
       const response = await axios.post(
         `${process.env.DALLE_URL}`,
@@ -79,7 +75,6 @@ class MenuService {
       );
 
       const imageUrl = response.data.data?.[0]?.url;
-      console.log("[MenuService.generateImageViaGPT] Image URL:", imageUrl);
       if (!imageUrl) {
         throw new Error("No image URL returned from DALL·E");
       }
@@ -99,14 +94,11 @@ class MenuService {
     const existingMenu = await Menu.findOne({ userId });
 
     if (existingMenu) {
-      // Update existing menu
       existingMenu.coupleNames = coupleNames;
       existingMenu.designPrompt = designPrompt;
       existingMenu.backgroundUrl = backgroundUrl;
-      // Optionally reset dishes or other fields if needed
       return existingMenu.save();
     } else {
-      // Create new menu
       return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
     }
   }
@@ -132,26 +124,20 @@ class MenuService {
     const base64Data = matches[1];
     const imgBuffer = Buffer.from(base64Data, "base64");
 
-    // יצירת תיקיות
-    const userDir = path.join(__dirname, "../uploads/menu", userId);
-    
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir);
+    const userDir = path.join(__dirname, "../../uploads/menu", userId);
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, {recursive: true});
 
-    // שמירת PNG
     const pngFilename = `final.png`;
     const pngPath = path.join(userDir, pngFilename);
     fs.writeFileSync(pngPath, imgBuffer);
 
-    // שמירת JSON
     const canvasFilename = `canvas.json`;
     const canvasPath = path.join(userDir, canvasFilename);
     fs.writeFileSync(canvasPath, JSON.stringify(finals.finalCanvasJson, null, 2));
 
-    // נתיבים יחסיים לבסיס uploads
-    const relativePngPath = path.relative(path.join(__dirname, "../../uploads"), pngPath).replace(/\\/g, "/");
-    const relativeCanvasPath = path.relative(path.join(__dirname, "../../uploads"), canvasPath).replace(/\\/g, "/");
+    const relativePngPath = path.relative(path.join(__dirname, "../uploads"), pngPath).replace(/\\/g, "/");
+    const relativeCanvasPath = path.relative(path.join(__dirname, "../uploads"), canvasPath).replace(/\\/g, "/");
 
-    // עדכון במסד
     const menu = await Menu.findOneAndUpdate(
       { userId },
       {

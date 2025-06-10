@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Model } from "mongoose";
+import mongoose, { Model } from "mongoose";
 import { AuthRequest } from "../common/auth-middleware";
 
 // A generic controller providing basic CRUD and user-scoped retrieval.
@@ -55,22 +55,28 @@ export class BaseController<T> {
 
   // GET /:id — get document by its ID
   async getById(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      console.log("[BaseController] Fetching by ID:", req.params.id);
+  try {
+    const id = req.params.id;
 
-      const item = await this.model.findById(req.params.id);
-      if (!item) {
-        console.warn("[BaseController] Item not found for ID:", req.params.id);
-        res.status(404).json({ message: "Not found" });
-        return;
-      }
-
-      this.sendSuccess(res, item);
-    } catch (err: any) {
-      console.error("[BaseController] getById error:", err);
-      this.sendError(res, err, 400);
+    // ** בדיקת תקינות ObjectId **
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ error: "Invalid ObjectId" });
+      return;
     }
+
+    const item = await this.model.findById(id);
+    if (!item) {
+      console.warn("[BaseController] Item not found for ID:", id);
+      res.status(404).json({ message: "Not found" });
+      return;
+    }
+
+    this.sendSuccess(res, item);
+  } catch (err: any) {
+    console.error("[BaseController] getById error:", err);
+    this.sendError(res, err, 400);
   }
+}
 
   // GET /mine — get all documents belonging to the authenticated user
   async getMine(req: AuthRequest, res: Response): Promise<void> {

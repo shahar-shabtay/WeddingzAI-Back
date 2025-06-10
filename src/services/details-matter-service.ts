@@ -41,7 +41,6 @@ Important:
 
 export async function suggestSongsFromAI(prompt: string): Promise<SongSuggestion[]> {
   if (!prompt) {
-    console.log('❌ [Details Matter] Missing prompt');
     throw new Error('No promt insert');
   } 
   try {
@@ -63,7 +62,6 @@ export async function suggestSongsFromAI(prompt: string): Promise<SongSuggestion
 
       const response = completion.choices[0].message.content;
       if (!response) {
-        console.log('❌ [Details Matter] No content in AI response');
         throw new Error('No content in AI response');
       }
 
