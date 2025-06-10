@@ -359,16 +359,9 @@ const getUserPremiumStatus = async (req: AuthRequest, res: Response) => {
             res.status(404).send({ message: "User not found" });
             return;
         }
-        if (user.is_premium) {
-            res.status(200).send({
-                message: "User is premium",
-                is_premium: true
-            });
-            return;
-        }
         res.status(200).send({
-            message: "User is not premium",
-            is_premium: false
+        message: user.is_premium ? "User is premium" : "User is not premium",
+        is_premium: Boolean(user.is_premium)
         });
     }
     catch (error) {
