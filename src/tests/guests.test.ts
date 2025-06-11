@@ -159,7 +159,7 @@ describe("Guest API Test Suite", () => {
       email: "unassign@example.com",
       userId: user!._id,
       rsvpToken: new mongoose.Types.ObjectId().toString(),
-      table: new mongoose.Types.ObjectId()
+      tableId: new mongoose.Types.ObjectId()
     });
 
     const res = await request(app)
@@ -223,6 +223,18 @@ describe("Guest API Test Suite", () => {
       });
 
     expect(res.statusCode).toBe(400);
+  });
+
+  test("RSVP Response - guest not found", async () => {
+    const res = await request(app)
+      .post(`${baseUrl}/rsvp-response`)
+      .send({
+        guestId: new mongoose.Types.ObjectId().toString(),
+        token: "invalid-token",
+        response: "yes"
+      });
+
+    expect(res.statusCode).toBe(403); // adjust to 404 if you change controller logic
   });
 
   test("Send Invitations - missing fields", async () => {
