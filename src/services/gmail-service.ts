@@ -2,6 +2,10 @@ import { google } from "googleapis";
 import path from "path";
 import fs from "fs/promises";
 import dotenv from "dotenv";
+import invitationModel from "../models/invitation-model";
+import axios from "axios";
+import guestModel from "../models/guest-model";
+
 
 dotenv.config();
 
@@ -40,19 +44,56 @@ function encodeSubject(subject: string): string {
   return `=?utf-8?B?${encoded}?=`;
 }
 
-function createEmail(to: string, subject: string, html: string): string {
-  const emailLines = [
+function createEmail(
+  to: string,
+  subject: string,
+  html: string,
+  attachment?: { filename: string; mimeType: string; contentBase64: string }
+): string {
+  if (!attachment) {
+    const lines = [
+      `To: ${to}`,
+      "Content-Type: text/html; charset=utf-8",
+      "MIME-Version: 1.0",
+      `Subject: ${encodeSubject(subject)}`,
+      "",
+      html,
+    ];
+    return Buffer.from(lines.join("\n")).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
+  // MIME multipart message with attachment
+  const boundary = "__wedding_boundary__";
+  const messageParts = [
     `To: ${to}`,
-    "Content-Type: text/html; charset=utf-8",
     "MIME-Version: 1.0",
     `Subject: ${encodeSubject(subject)}`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    "Content-Type: text/html; charset=UTF-8",
+    "MIME-Version: 1.0",
+    "Content-Transfer-Encoding: 7bit",
     "",
     html,
+    "",
+    `--${boundary}`,
+    `Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`,
+    "Content-Transfer-Encoding: base64",
+    `Content-Disposition: attachment; filename="${attachment.filename}"`,
+    "",
+    attachment.contentBase64,
+    "",
+    `--${boundary}--`,
   ];
 
-  const email = emailLines.join("\n");
-  return Buffer.from(email).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return Buffer.from(messageParts.join("\n"))
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
+
 
 function createRSVPLink(type: 'yes' | 'no' | 'maybe', guestId: string, token: string): string {
   const domainBase = process.env.DOMAIN_BASE || "http://localhost:4000";
@@ -111,8 +152,30 @@ export async function sendInvitationEmails(
 
   const subject = `💍 You're Invited to ${partner1} & ${partner2}'s Wedding!`;
 
+  const userId = guests[0]?.guestId ? (await guestModel.findById(guests[0].guestId))?.userId?.toString() : null;
+  const invitation = userId ? await invitationModel.findOne({ userId }) : null;
+
+  let imageAttachment: { filename: string; mimeType: string; contentBase64: string } | undefined;
+
+  if (invitation?.finalPng) {
+    try {
+      const baseUrl = process.env.DOMAIN_BASE;
+      const fullUrl = `${baseUrl}/uploads/invitation/${invitation.userId}/final.png`;
+
+      const response = await axios.get(fullUrl, { responseType: "arraybuffer" });
+      const base64 = Buffer.from(response.data, "binary").toString("base64");
+      imageAttachment = {
+        filename: "invitation.png",
+        mimeType: "image/png",
+        contentBase64: base64,
+      };
+    } catch (err) {
+      console.warn("Failed to fetch invitation image:", err);
+    }
+  }
+
   for (const guest of guests) {
-    const message = await loadInvitationMessage(
+    const messageHtml = await loadInvitationMessage(
       partner1,
       partner2,
       guest.fullName,
@@ -121,7 +184,13 @@ export async function sendInvitationEmails(
       weddingDate,
       venue
     );
-    const raw = createEmail(guest.email, subject, message);
+
+    const raw = createEmail(
+      guest.email,
+      subject,
+      messageHtml,
+      imageAttachment
+    );
 
     await gmail.users.messages.send({
       userId: "me",
