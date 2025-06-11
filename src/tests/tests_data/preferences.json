@@ -1,16 +1,16 @@
 {
-    "bride": "Emma",
-    "groom": "Noah",
-    "weddingDate": "2025-06-01",
-    "vibe": "Elegant & Formal",
-    "guestCount": "100–200 guests",
-    "location": "Beach or outdoor setting",
-    "estimatedBudget": "70000",
-    "importantPart": "The ceremony",
-    "ceremonyType": "Spiritual but not religious",
-    "guestExperience": "Intimate and emotional",
-    "planningTime": "A few months",
-    "foodStyle": "Plated gourmet meals",
-    "mustHave": "Live band or DJ"
+  "firstPartner": "Gabi",
+  "secondPartner": "Michal",
+  "hasDateAndVenue": "",
+  "weddingDate": "",
+  "venue": "",
+  "guestCount": "Under 100",
+  "weddingStyle": "",
+  "venueType": "Garden / Outdoor 🌳",
+  "dateRange": "October–December 🍂",
+  "importantPart": "Ceremony 💍",
+  "planningPriority": "Budget 💸",
+  "mustHave": "Photo Booth 📸",
+  "ceremonyTime": "Morning 🌞",
+  "additionalNotes": ""
 }
-  

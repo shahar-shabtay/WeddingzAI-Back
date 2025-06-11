@@ -5,7 +5,6 @@ import dotenv from "dotenv";
 import { Express } from "express";
 import vendorQueue from "../queue/Vendors-Queue";
 
-
 import {
     testUser,
     testUser2,
