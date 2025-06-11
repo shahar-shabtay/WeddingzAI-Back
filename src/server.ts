@@ -41,7 +41,7 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:" + process.env.PORT, }, 
+    servers: [{ url: "http://localhost:" + process.env.PORT + "/api" }, 
     { url: process.env.DOMAIN_BASE}],
   },
   apis: ["./src/routes/*.ts"],

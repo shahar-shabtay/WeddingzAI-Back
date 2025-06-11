@@ -32,7 +32,7 @@ export const premiumUser: User = {
     myVendors: [],
     email: "premium@weddinzai.com",
     password: "password123",
-    is_premium: true
+    isPremium: true
 }
 
 export const invalidEmailTestUser: User = {

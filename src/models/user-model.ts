@@ -9,7 +9,7 @@ export interface IUser {
   refreshTokens?: string[],
   _id?: string;
   avatar?: string;
-  is_premium?: boolean;
+  isPremium?: boolean;
   myVendors: IVendor[];
   bookedVendors: {
     vendorId: string;
@@ -55,7 +55,7 @@ const userSchema = new mongoose.Schema<IUser>({
   avatar: {
     type: String
   },
-  is_premium: {
+  isPremium: {
     type: Boolean,
     default: false
   },

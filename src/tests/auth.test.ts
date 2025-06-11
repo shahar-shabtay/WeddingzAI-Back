@@ -173,8 +173,8 @@ describe("Authentication and Authorization Test Suite", () => {
             const response = await request(app).get(`${baseUrl}/prem`)
                 .set("Authorization", `Bearer ${testUser.accessToken}`);
             expect(response.statusCode).toBe(200);
-            expect(response.body.is_premium).toBeDefined();
-            expect(response.body.is_premium).toBe(false);
+            expect(response.body.isPremium).toBeDefined();
+            expect(response.body.isPremium).toBe(false);
         });
 
         // Get User Premium Status without token
@@ -202,8 +202,8 @@ describe("Authentication and Authorization Test Suite", () => {
             const response = await request(app).get(`${baseUrl}/prem`)
                 .set("Authorization", `Bearer ${premiumUser.accessToken}`);
             expect(response.statusCode).toBe(200);
-            expect(response.body.is_premium).toBeDefined();
-            expect(response.body.is_premium).toBe(false);     ///// Change this to true when premium feature is implemented
+            expect(response.body.isPremium).toBeDefined();
+            expect(response.body.isPremium).toBe(false);     ///// Change this to true when premium feature is implemented
         });
     });
 
