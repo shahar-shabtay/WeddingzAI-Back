@@ -261,4 +261,75 @@ describe("Guest API Test Suite", () => {
 
     expect(res.statusCode).toBe(400);
   });
+
+  test("Create Guest - unauthorized", async () => {
+    const res = await request(app)
+      .post(baseUrl)
+      .send({
+        fullName: "Unauthorized Guest",
+        email: "unauth@example.com"
+      });
+
+    expect(res.statusCode).toBe(401);
+  });
+
+  test("Update Guest - missing required fields", async () => {
+    const res = await request(app)
+      .put(`${baseUrl}/${guestId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({}); // empty payload
+
+    expect([200, 404]).toContain(res.statusCode); // adjust depending on controller behavior
+  });
+
+  test("Delete Guest - not found", async () => {
+    const res = await request(app)
+      .delete(`${baseUrl}/507f1f77bcf86cd799439011`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  test("RSVP Response - invalid numberOfGuests", async () => {
+    const user = await userModel.findOne({ email: testUser.email });
+    const guest = await guestModel.create({
+      userId: user!._id,
+      fullName: "Invalid Guest Count",
+      email: "count@example.com",
+      rsvpToken: "counttoken"
+    });
+
+    const res = await request(app)
+      .post(`${baseUrl}/rsvp-response`)
+      .send({
+        guestId: guest._id,
+        token: guest.rsvpToken,
+        response: "yes",
+        numberOfGuests: 999
+      });
+
+    expect(res.statusCode).toBe(200);
+  });
+
+  test("RSVP Response - valid GET request", async () => {
+    const user = await userModel.findOne({ email: testUser.email });
+    const guest = await guestModel.create({
+      userId: user!._id,
+      fullName: "GET RSVP Guest",
+      email: "getrsvp@example.com",
+      rsvpToken: "gettoken"
+    });
+
+    const res = await request(app)
+      .get(`${baseUrl}/rsvp-response`)
+      .query({
+        guestId: guest._id.toString(),
+        token: "gettoken",
+        response: "yes",
+        numberOfGuests: 1
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.text).toContain("GET RSVP Guest");
+  });
 });
