@@ -7,6 +7,7 @@ import { Express } from "express";
 import guestModel from "../models/guest-model";
 import userModel from "../models/user-model";
 import tableModel from "../models/table-model";
+import vendorQueue from "../queue/Vendors-Queue";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await mongoose.connection.close();
+  await vendorQueue.close();
 });
 
 describe("Guest API Test Suite", () => {
