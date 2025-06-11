@@ -206,7 +206,7 @@ const logout = async (req: Request, res: Response) => {
                 if (!user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
                     user.refreshTokens = [];
                     await user.save();
-                    res.status(400).send({ message: "Invalid Token" });
+                    res.status(403).send({ message: "Invalid Token" });
                     return;
                 }
 
@@ -360,8 +360,8 @@ const getUserPremiumStatus = async (req: AuthRequest, res: Response) => {
             return;
         }
         res.status(200).send({
-        message: user.is_premium ? "User is premium" : "User is not premium",
-        is_premium: Boolean(user.is_premium)
+        message: user.isPremium ? "User is premium" : "User is not premium",
+        isPremium: Boolean(user.isPremium)
         });
     }
     catch (error) {
