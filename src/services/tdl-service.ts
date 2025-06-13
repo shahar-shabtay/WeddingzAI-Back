@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import tdlModel, { ITDL } from "../models/tdl-model";
 import userModel from "../models/user-model";
 import { endOfDay } from "date-fns"; // הוסף בתחילת הקובץ
-
+import {syncCalendarWithTDL} from "./calendar-service";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY as string;
@@ -142,6 +142,7 @@ export async function createTdlFromFile(filePath: string, userId: string): Promi
   };
 
   const doc = await tdlModel.create({ userId, tdl: structuredTdl });
+  await syncCalendarWithTDL(userId);
   await fs.unlink(filePath).catch(() => {});
   return doc;
 }
@@ -173,7 +174,9 @@ export async function addTask(
   });
 
   doc.markModified("tdl.sections");
-  return doc.save();
+  await doc.save();
+  await syncCalendarWithTDL(userId);
+  return doc;
 }
 
 export async function updateTask(
@@ -190,7 +193,6 @@ export async function updateTask(
   const doc = await tdlModel.findOne({ userId });
   if (!doc) throw new Error("TDL not found for user");
 
-  // 🔍 Find the task and its current section
   let foundSection = null;
   let todo = null;
 
@@ -212,7 +214,6 @@ export async function updateTask(
   const taskDate = new Date(updatedDueDate);
   const newSectionName = getSectionName(weddingDate, taskDate);
 
-  // 📝 Apply updates to todo
   todo.task = updates.task ?? todo.task;
   todo.dueDate = updatedDueDate;
   todo.priority = updates.priority ?? todo.priority;
@@ -220,20 +221,19 @@ export async function updateTask(
   todo.aiSent = false;
   
   if (foundSection.sectionName !== newSectionName) {
-    // ➕ Move todo to the new section
     foundSection.todos = foundSection.todos.filter(t => t._id.toString() !== todoId);
     const newSection = doc.tdl.sections.find(s => s.sectionName === newSectionName);
     if (!newSection) throw new Error(`Target section "${newSectionName}" not found`);
     newSection.todos.push(todo);
-    // 🔢 Sort both sections
     newSection.todos.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   } else {
-    // 🔢 Just sort current section if due date changed within the same section
     foundSection.todos.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   }
 
   doc.markModified("tdl.sections");
-  return doc.save();
+  await doc.save();
+  await syncCalendarWithTDL(userId);
+  return doc;
 }
 
 export async function deleteTask(
@@ -250,7 +250,9 @@ export async function deleteTask(
   section.todos = section.todos.filter(t => t._id.toString() !== todoId);
 
   doc.markModified("tdl.sections");
-  return doc.save();
+  await doc.save();
+  await syncCalendarWithTDL(userId);
+  return doc;
 }
 
 export async function updateWeddingDateWithAI(
@@ -303,7 +305,9 @@ export async function updateWeddingDateWithAI(
   doc.tdl.weddingDate = newWeddingDateStr;
   doc.markModified("tdl.sections");
   await userModel.findByIdAndUpdate(userId, { weddingDate: newWeddingDateStr });
-  return doc.save();
+  await doc.save();
+  await syncCalendarWithTDL(userId);
+  return doc;
 }
 
 export async function setTaskDone(
