@@ -68,14 +68,13 @@ app.use(cors(corsOptions));
 
 // API routes
 app.use(`${apiBase}/guests`, guestRoutes);
-app.use(apiBase, authRoutes); 
+app.use(`${apiBase}/auth`, authRoutes); 
 app.use(`${apiBase}/budget`, budgetRoutes);
-app.use(apiBase, tdlRoutes);
-app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);
+app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
-app.use(apiBase, fileRoutes);
+app.use(`${apiBase}/file`, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
 app.use(`${apiBase}/menu`, menuRoutes);
 app.use(`${apiBase}/calendar`, calendarRoutes);

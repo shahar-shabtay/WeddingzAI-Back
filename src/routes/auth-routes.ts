@@ -88,7 +88,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/register", authController.register);
+router.post("/register", authController.register);
 
 
 /**
@@ -146,7 +146,7 @@ router.post("/auth/register", authController.register);
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/login", authController.login);
+router.post("/login", authController.login);
 
 
 /**
@@ -184,7 +184,7 @@ router.post("/auth/login", authController.login);
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/logout", authController.logout);
+router.post("/logout", authController.logout);
 
 
 /**
@@ -226,7 +226,7 @@ router.post("/auth/logout", authController.logout);
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/refresh", authController.refresh);
+router.post("/refresh", authController.refresh);
 
 
 /**
@@ -296,7 +296,7 @@ router.post("/auth/refresh", authController.refresh);
  *       500:
  *         description: Internal server error
  */
-router.put("/auth/user", authMiddleware, authController.updateUser);
+router.put("/user", authMiddleware, authController.updateUser);
 
 
 /**
@@ -351,7 +351,7 @@ router.put("/auth/user", authMiddleware, authController.updateUser);
  *       500:
  *         description: Internal server error
  */
-router.post("/auth/google", authController.googleSignIn);
+router.post("/google", authController.googleSignIn);
 
 
 /**
@@ -396,7 +396,7 @@ router.post("/auth/google", authController.googleSignIn);
  *       500:
  *         description: Internal server error
  */
-router.put("/auth/resetpass", authMiddleware, authController.updatePassword);
+router.put("/resetpass", authMiddleware, authController.updatePassword);
 
 
 /** 
@@ -430,6 +430,6 @@ router.put("/auth/resetpass", authMiddleware, authController.updatePassword);
  *       500:
  *         description: Internal server error
 */ 
-router.get("/auth/prem", authMiddleware, authController.getUserPremiumStatus);
+router.get("/prem", authMiddleware, authController.getUserPremiumStatus);
 
 export default router;

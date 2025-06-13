@@ -1,0 +1,70 @@
+{
+  "userValid": {
+    "email": "vendortest@example.com",
+    "password": "password123",
+    "firstPartner": "Alice",
+    "secondPartner": "Bob"
+  },
+  "userInvalid": {
+    "email": "",
+    "password": "short"
+  },
+  "tdlValid": {
+    "sections": [
+      {
+        "name": "Vendors",
+        "todos": [
+          {
+            "task": "Find a DJ for the wedding",
+            "aiSent": true
+          },
+          {
+            "task": "Find a photographer",
+            "aiSent": false
+          },
+          {
+            "task": "Find a venue in Tel Aviv",
+            "aiSent": true
+          }
+        ]
+      }
+    ]
+  },
+  "vendorValid": {
+    "name": "Test DJ Vendor",
+    "vendorType": "DJ",
+    "about": "Best DJ for weddings",
+    "services": "DJ services",
+    "price_range": "$1000-$3000",
+    "area": "Tel Aviv",
+    "sourceUrl": "https://test-vendor.com",
+    "scrapedAt": "2025-06-12T12:00:00.000Z",
+    "eventImages": ["https://example.com/image1.jpg"],
+    "location_facilities": ["Parking", "Stage"],
+    "close_venues": ["Venue A", "Venue B"],
+    "faqs": [
+      {
+        "question": "Do you provide your own equipment?",
+        "answer": "Yes, full sound system included."
+      }
+    ],
+    "reviews": [
+      {
+        "reviewer": "John Doe",
+        "date": "2025-06-01",
+        "comment": "Amazing DJ performance!"
+      }
+    ],
+    "socialMedia": {
+      "facebook": "https://facebook.com/testdj",
+      "instagram": "https://instagram.com/testdj",
+      "twitter": "",
+      "youtube": ""
+    },
+    "website": "https://test-vendor.com",
+    "phone": "+1234567890"
+  },
+  "vendorInvalid": {
+    "vendorType": "DJ"
+  }
+}

@@ -1,6 +1,3 @@
-
-// src/controllers/vendor-controller.ts
-
 import { Response } from "express";
 import { BaseController } from "./base-controller";
 import { VendorModel, IVendor } from "../models/vendor-model";
@@ -17,18 +14,32 @@ export class VendorController extends BaseController<IVendor> {
   // Add a vendor research task to queue
   async startBackgroundResearch(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { query , userId} = req.body;
-      
+      const { query, userId } = req.body;
+
       if (!query || typeof query !== "string") {
         res.status(400).json({ success: false, error: "Query is required and must be a string" });
         return;
       }
-      
+
+      // נבדוק כבר כאן אם יש vendor type
+      const vendorType = vendorService.analyzeVendorType(query);
+
+      if (!vendorType) {
+        res.status(400).json({
+          success: false,
+          error: "Could not determine vendor type from your query. Please be more specific.",
+          errorCode: "VENDOR_TYPE_NOT_FOUND"   
+        });
+        return;
+      }
+
+      // אם יש type — מוסיפים ל־queue
       await vendorQueue.add({ query, userId });
+
       res.status(202).json({
         message: "Research job queued",
         success: true,
-        vendorType: "pending"
+        vendorType: vendorType.name
       });
     } catch (err: any) {
       console.error("[VendorController] Error queuing task:", err);
@@ -96,6 +107,7 @@ export class VendorController extends BaseController<IVendor> {
   }
 }
 
+  // Get user summary for vendors overview
   async getVendorSummary(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?._id;
@@ -122,6 +134,7 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
 
+  // get user match vendors
   async getUserVendors(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?._id;
@@ -142,6 +155,7 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
 
+  // get user booked vendors
   async getUserBookedVendors(req: AuthRequest, res: Response): Promise<void> {
     try {
       const userId = req.user?._id;
@@ -152,7 +166,7 @@ export class VendorController extends BaseController<IVendor> {
   
       const user = await userModel
         .findById(userId)
-        .populate('bookedVendors.vendorId') // populate vendorId references
+        .populate('bookedVendors.vendorId') 
         .lean();
   
       if (!user || !user.bookedVendors || user.bookedVendors.length === 0) {
@@ -162,7 +176,7 @@ export class VendorController extends BaseController<IVendor> {
   
       const bookedVendorsWithDetails = user.bookedVendors.map((entry: any) => ({
         vendorType: entry.vendorType,
-        vendor: entry.vendorId, // this is the populated vendor object
+        vendor: entry.vendorId, 
       }));
   
       this.sendSuccess(res, bookedVendorsWithDetails, "Fetched booked vendors");
@@ -171,10 +185,10 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
   
-
+  // get user relevant vendors
   async refetchRelevantVendors(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user?._id?.toString(); // or req.userId
+      const userId = req.user?._id?.toString();
       if (!userId) {
         res.status(401).json({ error: "Unauthorized" });
         return;
@@ -188,51 +202,53 @@ export class VendorController extends BaseController<IVendor> {
     }
   }
 
-async toggleBooked(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id;
-    const { vendorId } = req.body;
+  // book vendor
+  async toggleBooked(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?._id;
+      const { vendorId } = req.body;
 
-    if (!userId || !vendorId) {
-      res.status(400).json({ success: false, error: "Missing user or vendor ID" });
-      return;
+      if (!userId || !vendorId) {
+        res.status(400).json({ success: false, error: "Missing user or vendor ID" });
+        return;
+      }
+
+      const result = await vendorService.toggleBookedVendor(userId, vendorId);
+
+      res.status(200).json({
+        success: true,
+        ...result,
+      });
+    } catch (err: any) {
+      res.status(500).json({
+        success: false,
+        error: err.message || "Internal server error"
+      });
     }
-
-    const result = await vendorService.toggleBookedVendor(userId, vendorId);
-
-    res.status(200).json({
-      success: true,
-      ...result, // includes added, message, vendorType
-    });
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      error: err.message || "Internal server error"
-    });
   }
-}
 
+  // unbook vendor
   async cancelBook(req: AuthRequest, res: Response): Promise<void> {
-  try {
-    const userId = req.user?._id;
-    const { vendorId } = req.body;
+    try {
+      const userId = req.user?._id;
+      const { vendorId } = req.body;
 
-    if (!userId || !vendorId) {
-      res.status(400).json({ success: false, error: "Missing user or vendor ID" });
-      return;
+      if (!userId || !vendorId) {
+        res.status(400).json({ success: false, error: "Missing user or vendor ID" });
+        return;
+      }
+
+      const removed = await vendorService.cancelBookedVendor(userId, vendorId);
+      if (!removed) {
+        res.status(404).json({ success: false, message: "Vendor not booked" });
+        return;
+      }
+
+      res.status(200).json({ success: true, message: "Booking canceled" });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
     }
-
-    const removed = await vendorService.cancelBookedVendor(userId, vendorId);
-    if (!removed) {
-      res.status(404).json({ success: false, message: "Vendor not booked" });
-      return;
-    }
-
-    res.status(200).json({ success: true, message: "Booking canceled" });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
   }
-}
   
 }
 

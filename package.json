@@ -7,7 +7,8 @@
     "dev": "cp .env.dev .env && nodemon ./src/app.ts",
     "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand",
     "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage auth.test.ts",
-    "testTdl": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage tdl.test.ts"
+    "testTdl": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage tdl.test.ts",
+    "testVendors": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit vendors.test.ts"
   },
   "keywords": [],
   "author": "",
