@@ -149,6 +149,7 @@ class GuestsController extends BaseController<IGuest> {
           guestId: g._id.toString(),
           rsvpToken: g.rsvpToken!,
           numberOfGuests: g.numberOfGuests ?? 1,
+          userId: g.userId.toString(),
         }));
 
       if (recipients.length === 0) {
