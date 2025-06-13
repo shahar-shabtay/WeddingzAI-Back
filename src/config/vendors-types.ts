@@ -1,11 +1,11 @@
-                export interface VendorType {
+export interface VendorType {
   name: string;          
   keywords: string[];    
   listingUrl: string;    
   extractPrompt: string; 
   scrapePrompt: string;  
   modelType: string;
-  searchField: string;
+  searchField: string[];
 }
 
 export const VENDOR_TYPES: VendorType[] = [
@@ -74,7 +74,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "DjModel",
-    searchField: "genres"
+    searchField: ["genres", "about", "brideReviews", "services", "faqs","price_range"]
   },
     // Hair and Makup Details
   {
@@ -109,7 +109,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface HairMakeup {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -139,7 +139,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "HairMakeupModel",
-    searchField: "about"
+    searchField: ["max_companions", "price_include", "about", "brideReviews", "faqs", "price_range"]
   },
     // Venues
   {
@@ -148,7 +148,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/מקום-לאירוע.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Venues profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -175,7 +175,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface Venues {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -206,7 +206,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "VenueModel",
-    searchField: "about"
+    searchField: ["about", "min_guests", "max_guests", "brideReviews", "faqs", "seasons"]
   },
     // Stills
   {
@@ -215,7 +215,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/צילום-סטילס.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Stills profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -241,7 +241,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface Stills {
         _id:            string;
         name:           string;
         coverImage?:    string;
@@ -271,7 +271,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "StillsModel",
-    searchField: "about"
+    searchField: ["about", "price_include", "weekend", "serv_location", "faqs", "seasons", "brideReviews"]
   },
     // Video
   {
@@ -280,7 +280,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/צילום-וידאו.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Video profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -308,7 +308,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface Video {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -340,7 +340,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "VideoModel",
-    searchField: "shoot_type"
+    searchField: ["about","shoot_type", "brideReviews", "faqs", "hours", "price_include", "serv_location"]
   },
     // Ready Places
   {
@@ -349,7 +349,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/מקום-התארגנות.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Ready Places profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -378,7 +378,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface ReadyPlace {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -412,7 +412,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "ReadyPlaceModel",
-    searchField: "about"
+    searchField: ["about", "check_in", "check_out", "max_guests", "max_vendors","location_facilities", "faqs", "brideReviews", "price_range"]
   },
     //Gifts for guests
   {
@@ -421,7 +421,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/מתנות-לאורחים.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Guest Gifts profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -444,7 +444,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface GuestGifts {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -471,7 +471,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "GiftsModel",
-    searchField: "about"
+    searchField: ["about", "faqs", "brideReviews"]
   },
     // Groom Suits
   {
@@ -480,7 +480,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/חליפת-חתן.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Groom Suits profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -538,7 +538,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "GroomSuitsModel",
-    searchField: "about"
+    searchField: ["about", "faqs", "reviwes", "price_range", "buy_options", "size_range", "accessorise"]
   },   
     // Design
   {
@@ -547,7 +547,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/עיצוב-והפקה.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Design profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -571,7 +571,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface Design {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -599,7 +599,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "Design",
-    searchField: "about"
+    searchField: ["about", "faqs", "brideReviews", "price_range"]
   },  
     // Bride suit
   {
@@ -608,7 +608,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/שמלה.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Bride Dress profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -634,7 +634,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface BrideDress {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -664,7 +664,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "BrideDress",
-    searchField: "about"
+    searchField: ["about", "faqs", "brideReviews", "price_range", "size_range", "accessorise"]
   }, 
 
     // Attractions
@@ -674,7 +674,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/הפינצטה/אטרקציות-לחתונה.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of 10 Venues profile URLs found on that page.
+        extract and return an array of all Attraction profile URLs found on that page.
         Only output JSON like: { "urls": ["https://…", "https://…", …] }.
             `.trim(),
     scrapePrompt: `
@@ -699,7 +699,7 @@ export const VENDOR_TYPES: VendorType[] = [
         Return ONLY valid JSON (or an array) matching this TypeScript interface:
 
         \`\`\`ts
-        export interface Dj {
+        export interface Attractions {
         _id:           string;
         name:          string;
         coverImage?:   string;
@@ -728,7 +728,7 @@ export const VENDOR_TYPES: VendorType[] = [
         HTML URL: {{pageUrl}}
             `.trim(),
     modelType: "atractions",
-    searchField: "about"
+    searchField: ["about", "price_range", "max_guests", "brideReviews", "faqs"]
   }, 
 ];
 
