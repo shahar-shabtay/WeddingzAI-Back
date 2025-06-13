@@ -6,9 +6,6 @@ import invitationModel from "../models/invitation-model";
 
 dotenv.config();
 
-const SCOPES = ["https://www.googleapis.com/auth/gmail.send"];
-const TOKEN_PATH = process.env.GMAIL_TOKEN_PATH || "./.gmail-token.json";
-
 async function getOAuth2Client() {
   // 1. Decode and parse credentials
   const credJSON = Buffer.from(process.env.GMAIL_CREDENTIALS_BASE64!, 'base64').toString('utf8');
@@ -35,24 +32,9 @@ async function getOAuth2Client() {
   return oAuth2Client;
 }
 
-
 function encodeSubject(subject: string): string {
   const encoded = Buffer.from(subject, "utf8").toString("base64");
   return `=?utf-8?B?${encoded}?=`;
-}
-
-function createEmail(to: string, subject: string, html: string): string {
-  const emailLines = [
-    `To: ${to}`,
-    "Content-Type: text/html; charset=utf-8",
-    "MIME-Version: 1.0",
-    `Subject: ${encodeSubject(subject)}`,
-    "",
-    html,
-  ];
-
-  const email = emailLines.join("\n");
-  return Buffer.from(email).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
 function createRSVPLink(type: 'yes' | 'no' | 'maybe', guestId: string, token: string): string {
