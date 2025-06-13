@@ -8,7 +8,9 @@
     "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand",
     "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage auth.test.ts",
     "testTdl": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage tdl.test.ts",
-    "testVendors": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit vendors.test.ts"
+    "testVendors": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage vendors.test.ts",
+    "testGuests": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage guests.test.ts",
+    "testCalendar": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit calendar.test.ts"
   },
   "keywords": [],
   "author": "",

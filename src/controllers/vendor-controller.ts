@@ -21,19 +21,17 @@ export class VendorController extends BaseController<IVendor> {
         return;
       }
 
-      // נבדוק כבר כאן אם יש vendor type
       const vendorType = vendorService.analyzeVendorType(query);
 
       if (!vendorType) {
         res.status(400).json({
           success: false,
-          error: "Could not determine vendor type from your query. Please be more specific.",
+          error: "Can't sent this task to AI",
           errorCode: "VENDOR_TYPE_NOT_FOUND"   
         });
         return;
       }
 
-      // אם יש type — מוסיפים ל־queue
       await vendorQueue.add({ query, userId });
 
       res.status(202).json({
