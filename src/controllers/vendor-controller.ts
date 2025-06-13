@@ -14,18 +14,32 @@ export class VendorController extends BaseController<IVendor> {
   // Add a vendor research task to queue
   async startBackgroundResearch(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { query , userId} = req.body;
-      
+      const { query, userId } = req.body;
+
       if (!query || typeof query !== "string") {
         res.status(400).json({ success: false, error: "Query is required and must be a string" });
         return;
       }
-      
+
+      // נבדוק כבר כאן אם יש vendor type
+      const vendorType = vendorService.analyzeVendorType(query);
+
+      if (!vendorType) {
+        res.status(400).json({
+          success: false,
+          error: "Could not determine vendor type from your query. Please be more specific.",
+          errorCode: "VENDOR_TYPE_NOT_FOUND"   
+        });
+        return;
+      }
+
+      // אם יש type — מוסיפים ל־queue
       await vendorQueue.add({ query, userId });
+
       res.status(202).json({
         message: "Research job queued",
         success: true,
-        vendorType: "pending"
+        vendorType: vendorType.name
       });
     } catch (err: any) {
       console.error("[VendorController] Error queuing task:", err);
