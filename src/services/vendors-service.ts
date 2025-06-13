@@ -280,9 +280,10 @@ export class VendorService {
     // ✅ Get relevant vendors using Gemini AI and save to user's myVendors field
     const relevantVendors = await this.getRelevantVendorsByTDL(userId);
     const vendorIds = relevantVendors.map((v) => v._id);
+        console.log("save relevant");
 
     await userModel.findByIdAndUpdate(userId, {
-      $addToSet: { myVendors: { $each: vendorIds } },
+        $addToSet: { myVendors: { $each: vendorIds } },
     });
 
     console.log(`[VendorService] Saved ${vendorIds.length} relevant vendors to user ${userId}`);
@@ -304,7 +305,7 @@ export class VendorService {
 }
 
   // AI-based filtering of vendors based on the user's TDL tasks
-  async getRelevantVendorsByTDL(userId: string): Promise<IVendor[]> {
+async getRelevantVendorsByTDL(userId: string): Promise<IVendor[]> {
   const tdl = await tdlModel.findOne({ userId }).lean();
   if (!tdl || !Array.isArray(tdl.tdl?.sections)) return [];
 
@@ -318,11 +319,28 @@ export class VendorService {
     const type = this.analyzeVendorType(task.task);
     if (!type) continue;
 
+    const searchFields = type.searchField && Array.isArray(type.searchField) && type.searchField.length > 0
+      ? type.searchField
+      : [ "about" ]; 
+
     const vendors = await VendorModel.find({ vendorType: type.name });
-    const descriptions = vendors.map((v, i) => `Vendor ${i + 1}: ${v.name}\nAbout: ${v.about}`).join("\n");
+
+    const descriptions = vendors.map((v, i) => {
+      const fieldValues = searchFields.map((field) => {
+        const value = (v as any)[field];
+
+        if (Array.isArray(value)) {
+          return `${field}: ${value.join(", ")}`;
+        } else {
+          return `${field}: ${value || ""}`;
+        }
+      }).join("\n");
+
+      return `Vendor ${i + 1}: ${v.name}\n${fieldValues}`;
+    }).join("\n\n");
 
     const prompt = `
-      Given the task: "${task.task}", select the most relevant vendors from the list below based on their description (about).
+      Given the task: "${task.task}", select the most relevant vendors from the list below based on the following fields: ${searchFields.join(", ")}.
       Return a JSON array of the vendor names that best fit the task.
 
       ${descriptions}
@@ -364,11 +382,23 @@ export class VendorService {
 
       const matched = vendors.filter((v) => selectedNames.includes(v.name));
       results.push(...matched);
-    } catch {
+    } catch (err) {
+      console.error(`[VendorService] Gemini error in getRelevantVendorsByTDL:`, err);
       continue; // Gemini error (e.g. quota), silently ignore
     }
   }
 
+  // 🟢 SAVE to user.myVendors - replace the entire array:
+try {
+  await userModel.findByIdAndUpdate(userId, {
+    $addToSet: { myVendors: { $each: results.map((v) => v._id) } },
+  });
+  console.log(`[VendorService] Added ${results.length} relevant vendors to user ${userId}`);
+} catch (err) {
+  console.error(`[VendorService] Failed to update myVendors for user ${userId}:`, err);
+}
+
+  // Return results as before
   return results;
 }
 
