@@ -2,6 +2,7 @@ import { google } from "googleapis";
 import path from "path";
 import fs from "fs/promises";
 import dotenv from "dotenv";
+import invitationModel from "../models/invitation-model";
 
 dotenv.config();
 
@@ -97,6 +98,7 @@ interface GuestInfo {
   fullName: string;
   guestId: string;
   rsvpToken: string;
+  userId: string;
 }
 
 export async function sendInvitationEmails(
@@ -121,7 +123,58 @@ export async function sendInvitationEmails(
       weddingDate,
       venue
     );
-    const raw = createEmail(guest.email, subject, message);
+
+    // Try to load invitation (PNG) if exists
+    const invitation = await invitationModel.findOne({ userId: guest.userId });
+    let attachment = null;
+
+    if (invitation?.finalPng) {
+      try {
+        const invitationPath = path.join(process.cwd(), "uploads", "invitation", invitation.userId, "final.png");
+
+        const pngBuffer = await fs.readFile(invitationPath);
+        const pngBase64 = pngBuffer.toString("base64");
+
+        attachment = {
+          filename: "wedding-invitation.png",
+          content: pngBase64,
+          mimeType: "image/png",
+        };
+      } catch (err) {
+        console.warn(`⚠️ Could not read invitation PNG for ${guest.email}`, err);
+      }
+    }
+
+    const emailLines = [
+      `To: ${guest.email}`,
+      "Content-Type: multipart/mixed; boundary=boundary123",
+      "MIME-Version: 1.0",
+      `Subject: ${encodeSubject(subject)}`,
+      "",
+      "--boundary123",
+      "Content-Type: text/html; charset=utf-8",
+      "",
+      message,
+    ];
+
+    if (attachment) {
+      emailLines.push(
+        "--boundary123",
+        `Content-Type: ${attachment.mimeType}; name=${attachment.filename}`,
+        "Content-Transfer-Encoding: base64",
+        `Content-Disposition: attachment; filename="${attachment.filename}"`,
+        "",
+        attachment.content
+      );
+    }
+
+    emailLines.push("--boundary123--");
+
+    const raw = Buffer.from(emailLines.join("\n"))
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
 
     await gmail.users.messages.send({
       userId: "me",
