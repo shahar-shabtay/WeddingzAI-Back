@@ -1,63 +1,56 @@
 import { Request, Response } from 'express';
 import * as calendarService from '../services/calendar-service';
 
-export const getEvents = (req: Request, res: Response): Promise<void> => {
+export const getEvents = async (req: Request, res: Response): Promise<void> => {
   const userId = req.params.userId;
 
-  return calendarService.getCalendarByUserId(userId)
-    .then((calendar) => {
-      if (!calendar) {
-        res.status(404).json({ message: 'Calendar not found' });
-        return;
-      }
-      res.json(calendar.events);
-    })
-    .catch((err) => {
-      res.status(500).json({ message: err.message });
-    });
+  try {
+    const calendar = await calendarService.getCalendarByUserId(userId);
+    if (!calendar) {
+      res.status(404).json({ message: 'Calendar not found' });
+      return;
+    }
+    res.json(calendar.events);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-export const createEvent = (req: Request, res: Response): Promise<void> => {
+export const createEvent = async (req: Request, res: Response): Promise<void> => {
   const userId = req.params.userId;
 
-  return calendarService.getCalendarByUserId(userId)
-    .then((calendar) => {
-      if (!calendar) {
-        return calendarService.createCalendarForUser(userId);
-      }
-      return calendar;
-    })
-    .then(() => calendarService.addEvent(userId, req.body))
-    .then((event) => {
-      res.status(201).json(event);
-    })
-    .catch((err) => {
-      res.status(500).json({ message: err.message });
-    });
+  try {
+    let calendar = await calendarService.getCalendarByUserId(userId);
+    if (!calendar) {
+      calendar = await calendarService.createCalendarForUser(userId);
+    }
+    const event = await calendarService.addEvent(userId, req.body);
+    res.status(201).json(event);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-export const updateEvent = (req: Request, res: Response): Promise<void> => {
+export const updateEvent = async (req: Request, res: Response): Promise<void> => {
   const userId = req.params.userId;
   const eventId = req.params.eventId;
 
-  return calendarService.updateEvent(userId, eventId, req.body)
-    .then((updatedEvent) => {
-      res.json(updatedEvent);
-    })
-    .catch((err) => {
-      res.status(500).json({ message: err.message });
-    });
+  try {
+    const updatedEvent = await calendarService.updateEvent(userId, eventId, req.body);
+    res.json(updatedEvent);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
-export const deleteEvent = (req: Request, res: Response): Promise<void> => {
+export const deleteEvent = async (req: Request, res: Response): Promise<void> => {
   const userId = req.params.userId;
   const eventId = req.params.eventId;
 
-  return calendarService.deleteEvent(userId, eventId)
-    .then(() => {
-      res.status(204).end();
-    })
-    .catch((err) => {
-      res.status(500).json({ message: err.message });
-    });
+  try {
+    await calendarService.deleteEvent(userId, eventId);
+    res.status(204).end();
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 };

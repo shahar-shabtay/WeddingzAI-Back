@@ -5,6 +5,8 @@ import express, { Request, Response, Express } from "express";
 import cors from "cors";
 import path from "path";
 import mongoose from "mongoose";
+import swaggerJsDoc from "swagger-jsdoc";
+import swaggerUI from "swagger-ui-express";
 
 // Routes
 import authRoutes from "./routes/auth-routes";
@@ -30,6 +32,24 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
+// Swagger Documentation
+const options = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Web Dev 2025 REST API",
+      version: "1.0.0",
+      description: "REST server including authentication using JWT",
+    },
+    servers: [{ url: "http://localhost:" + process.env.PORT + "/api" }, 
+    { url: process.env.DOMAIN_BASE}],
+  },
+  apis: ["./src/routes/*.ts"],
+};
+const specs = swaggerJsDoc(options);
+app.use(`${apiBase}/api-docs`, swaggerUI.serve, swaggerUI.setup(specs));
+
+
 // Static files middleware - חייב להיות לפני ה-API routes
 app.use('/static', express.static(path.join(__dirname, './static')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
@@ -48,14 +68,13 @@ app.use(cors(corsOptions));
 
 // API routes
 app.use(`${apiBase}/guests`, guestRoutes);
-app.use(apiBase, authRoutes); 
+app.use(`${apiBase}/auth`, authRoutes); 
 app.use(`${apiBase}/budget`, budgetRoutes);
-app.use(apiBase, tdlRoutes);
-app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/tdl`, tdlRoutes);
+app.use(`${apiBase}/tables`, tableRoutes);
 app.use(`${apiBase}/details-matter`, detailsMatterRoutes);
 app.use(`${apiBase}/vendors`, vendorsRoute);
-app.use(apiBase, fileRoutes);
+app.use(`${apiBase}/file`, fileRoutes);
 app.use(`${apiBase}/invitation`, invitationRoutes);
 app.use(`${apiBase}/menu`, menuRoutes);
 app.use(`${apiBase}/calendar`, calendarRoutes);

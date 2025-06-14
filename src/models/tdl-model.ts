@@ -7,7 +7,7 @@ const todoSchema = new Schema({
   priority: { type: String },
   aiSent:   { type: Boolean, default: false },
   done:     { type: Boolean, default: false }
-}, { _id: true });  // Ensure each todo has its own _id
+}, { _id: true }); 
 
 // A section grouping multiple to-dos
 const sectionSchema = new Schema({

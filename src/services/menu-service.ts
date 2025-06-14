@@ -86,34 +86,49 @@ class MenuService {
   }
 
   async createOrUpdateMenuWithBackground(
-    userId: string,
-    coupleNames: string,
-    designPrompt: string,
-    backgroundUrl: string
-  ): Promise<IMenu> {
-    const existingMenu = await Menu.findOne({ userId });
+  userId: string,
+  coupleNames: string,
+  designPrompt: string,
+  backgroundUrl: string
+): Promise<IMenu> {
+    try {
+      const existingMenu = await Menu.findOne({ userId });
 
-    if (existingMenu) {
-      existingMenu.coupleNames = coupleNames;
-      existingMenu.designPrompt = designPrompt;
-      existingMenu.backgroundUrl = backgroundUrl;
-      return existingMenu.save();
-    } else {
-      return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
+      if (existingMenu) {
+        existingMenu.coupleNames = coupleNames;
+        existingMenu.designPrompt = designPrompt;
+        existingMenu.backgroundUrl = backgroundUrl;
+        return existingMenu.save();
+      } else {
+        return Menu.create({ userId, coupleNames, designPrompt, backgroundUrl, dishes: [] });
+      }
+    } catch (err: any) {
+      console.error("[MenuService.createOrUpdateMenuWithBackground] Error:", err?.message || err);
+      throw err;
     }
   }
 
   async updateDishesByUserId(userId: string, dishes: IDish[]) {
-  return await Menu.findOneAndUpdate(
-    { userId },
-    { dishes },
-    { new: true }
-  );
+  try {
+    return await Menu.findOneAndUpdate(
+      { userId },
+      { dishes },
+      { new: true }
+    );
+  } catch (err: any) {
+    console.error("[MenuService.updateDishesByUserId] Error:", err?.message || err);
+    throw err;
+  }
 }
 
   async getMenuByUserId(userId: string): Promise<IMenu | null> {
+  try {
     return await Menu.findOne({ userId });
+  } catch (err: any) {
+    console.error("[MenuService.getMenuByUserId] Error:", err?.message || err);
+    throw err;
   }
+}
 
   async updateFinals(userId: string, finals: FinalsData) {
     // המרת base64 ל-buffer

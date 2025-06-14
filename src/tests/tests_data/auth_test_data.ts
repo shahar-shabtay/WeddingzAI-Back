@@ -25,6 +25,16 @@ export const testUser2: User = {
     password: "password123"
 }
 
+export const premiumUser: User = {
+    firstPartner: "premium",
+    secondPartner: "User",
+    bookedVendors: [],
+    myVendors: [],
+    email: "premium@weddinzai.com",
+    password: "password123",
+    isPremium: true
+}
+
 export const invalidEmailTestUser: User = {
     firstPartner: "Test",
     secondPartner: "Test",
@@ -50,4 +60,13 @@ export const shortPasswordTestUser: User = {
     myVendors: [],
     email: "test@weddinzai.com",
     password: "123"
+}
+
+export const MissingFieldsTestUser: User = {
+    firstPartner: "",
+    secondPartner: "",
+    bookedVendors: [],
+    myVendors: [],
+    email: "",
+    password: ""
 }

@@ -6,7 +6,12 @@
     "prod": "cp .env.prod .env && npx tsc && node ./dist/app.js",
     "dev": "cp .env.dev .env && nodemon ./src/app.ts",
     "test": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage --runInBand",
-    "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit auth.test.ts"
+    "testAuth": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage auth.test.ts",
+    "testTdl": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage tdl.test.ts",
+    "testVendors": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage vendors.test.ts",
+    "testGuests": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage guests.test.ts",
+    "testCalendar": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage calendar.test.ts",
+    "testMenu": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit menu.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -37,7 +42,9 @@
     "openai": "^4.97.0",
     "path": "^0.12.7",
     "react-router-dom": "^7.4.0",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@google/generative-ai": "^0.24.0",
@@ -52,6 +59,8 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.10",
     "@types/supertest": "^6.0.2",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "fs-extra": "^11.3.0",
