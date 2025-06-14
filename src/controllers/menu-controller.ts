@@ -89,7 +89,7 @@ export class MenuController extends BaseController<IMenu> {
       const userId = req.params.userId;
       const menu = await menuService.getMenuByUserId(userId);
       if (!menu) {
-        res.status(404).json({ error: "Menu not found" });
+        res.status(200).json(null);
         return;
       }
       res.json(menu);

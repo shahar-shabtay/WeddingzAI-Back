@@ -114,7 +114,7 @@ async updateHoursByUserId(req: Request, res: Response): Promise<void> {
       const userId = req.params.userId;
       const invitation = await invitationService.getInvitationByUserId(userId);
       if (!invitation) {
-        res.status(404).json({ error: "Invitation not found" });
+        res.status(200).json(null);
         return;
       }
       res.json(invitation);
