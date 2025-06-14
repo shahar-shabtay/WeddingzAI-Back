@@ -123,7 +123,7 @@ export async function sendInvitationEmails(
           mimeType: "image/png",
         };
       } catch (err) {
-        console.warn(`⚠️ Could not read invitation PNG for ${guest.email}`, err);
+        console.warn(`Could not read invitation PNG for ${guest.email}`, err);
       }
     }
 

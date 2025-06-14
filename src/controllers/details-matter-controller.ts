@@ -11,6 +11,16 @@ async function suggestSongsHandler(req: Request, res: Response): Promise<void> {
     return;
   }
 
+  if (typeof prompt !== 'string') {
+    res.status(400).json({ error: 'Prompt must be a string' });
+    return;
+  }
+
+  if (prompt.trim() === '') {
+    res.status(400).json({ error: 'Prompt cannot be empty' });
+    return;
+  }
+
   try {
     const songs = await service.suggestSongsFromAI(prompt);
     res.status(200).json(songs);
