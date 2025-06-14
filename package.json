@@ -12,7 +12,8 @@
     "testGuests": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage guests.test.ts",
     "testCalendar": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage calendar.test.ts",
     "testMenu": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit menu.test.ts",
-    "testDetailsMatter": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage details-matter.test.ts"
+    "testDetailsMatter": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage details-matter.test.ts",
+    "testInvitation": "cp .env.tst .env && npx tsc && jest --detectOpenHandles --forceExit --coverage  invitation.test.ts"
   },
   "keywords": [],
   "author": "",
