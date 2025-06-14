@@ -311,7 +311,6 @@ const updateUser = async (req: AuthRequest, res: Response) => {
         if (weddingVenue) user.weddingVenue = weddingVenue;
 
         const updatedUser = await user.save();
-        console.log("User updated");
         res.status(200).send({
             email: updatedUser.email,
             firstPartner: updatedUser.firstPartner,
