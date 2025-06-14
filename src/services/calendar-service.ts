@@ -63,6 +63,4 @@ export const syncCalendarWithTDL = async (userId: string) => {
     });
   });
   await calendar.save();
-
-  console.log(`[CalendarService] Synced calendar with ${allTasks.length} tasks from TDL for user ${userId}`);
 };

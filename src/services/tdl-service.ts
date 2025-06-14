@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import tdlModel, { ITDL } from "../models/tdl-model";
 import userModel from "../models/user-model";
 import { endOfDay } from "date-fns"; // הוסף בתחילת הקובץ
-import {syncCalendarWithTDL} from "./calendar-service";
+import {syncCalendarWithTDL, createCalendarForUser} from "./calendar-service";
 
 dotenv.config();
 const apiKey = process.env.GOOGLE_API_KEY as string;
@@ -142,6 +142,7 @@ export async function createTdlFromFile(filePath: string, userId: string): Promi
   };
 
   const doc = await tdlModel.create({ userId, tdl: structuredTdl });
+  await createCalendarForUser(userId);
   await syncCalendarWithTDL(userId);
   await fs.unlink(filePath).catch(() => {});
   return doc;
