@@ -40,7 +40,7 @@ export class MenuController extends BaseController<IMenu> {
     }
 
     try {
-      // הגדרת נתיב שמירה מקומי מלא
+      
       const saveDir = path.join(process.cwd(), `/uploads/menu/${userId}`);
 
       const publicPathPrefix = `/uploads/menu/${userId}/background.png`;

@@ -38,7 +38,6 @@ export class InvitationController extends BaseController<IInvitation> {
     }
 
     try {
-      // הגדרת נתיב שמירה מקומי מלא
       const saveDir = path.join(process.cwd(), `/uploads/invitation/${userId}`);
 
       const publicPathPrefix = `/uploads/invitation/${userId}/background.png`;
@@ -133,7 +132,6 @@ async updateHoursByUserId(req: Request, res: Response): Promise<void> {
         res.status(400).json({ error: "Missing final data" });
         return;
       }
-
       const updateInvitation = await invitationService.updateFinals(userId, finals);
 
       res.json({ success: true, invitation: updateInvitation });

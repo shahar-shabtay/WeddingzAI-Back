@@ -214,10 +214,6 @@ class GuestsController extends BaseController<IGuest> {
         html = html
           .replace(/{{fullName}}/g, guest.fullName)
           .replace(/{{response}}/g, response as string)
-          .replace(
-            /{{bgImageUrl}}/g,
-            "http://localhost:4000/static/main-bg.png"
-          )
           .replace(/{{numberOfGuests}}/g, String(guest.numberOfGuests ?? 1));
 
         res.set("Content-Type", "text/html");

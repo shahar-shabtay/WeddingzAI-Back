@@ -144,12 +144,23 @@ export const VENDOR_TYPES: VendorType[] = [
     // Venues
   {
     name: "Venues",
-    keywords: ["venue", "hall","venue"],
+    keywords: ["venue", "hall", "location", "place", "site", "event space", "wedding hall", "banquet hall", "garden", "estate"],
     listingUrl: "https://urbanbridesmag.co.il/מקום-לאירוע.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
-        extract and return an array of all Venues profile URLs found on that page.
-        Only output JSON like: { "urls": ["https://…", "https://…", …] }.
+        scan the HTML for anchor tags <a> that link to INDIVIDUAL venue profile pages.
+        Rules:
+        - Collect only anchors with hrefs that point to venue PROFILE pages (not category, not listing, not pagination).
+        - Return ABSOLUTE URLs only.
+        - Output ONLY JSON: { "urls": ["https://...","https://..."] } with no extra text, no markdown.
+
+        Heuristics:
+        - Same domain as {{listingUrl}}
+        - Path depth >= 2 (likely /<category>/<profile> or similar)
+        - Exclude links with anchors (#), tel:, mailto:, query-only, or the listing itself.
+
+        Return: { "urls": [...] }
+
             `.trim(),
     scrapePrompt: `
         You are scraping a Venues profile page at {{pageUrl}}.  

@@ -3,12 +3,34 @@ import { VendorType, VENDOR_TYPES } from "../config/vendors-types";
 import { VendorModel, IVendor } from "../models/vendor-model";
 import tdlModel from "../models/tdl-model";
 import userModel from "../models/user-model";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+// import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 
+// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY!);
+// const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY!,
+});
+
+export const model = {
+  async generateContent(prompt: string) {
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // or gpt-4.1 / gpt-4o
+      messages: [{ role: "user", content: prompt }],
+    });
+
+    const content = res.choices?.[0]?.message?.content ?? "";
+
+    // return Gemini-like structure
+    return {
+      response: {
+        text: () => content,
+      },
+    };
+  },
+};
 export interface VendorResearchResult {
   vendorType: string;
   urlsFound: number;
@@ -66,29 +88,142 @@ export class VendorService {
       "{{listingUrl}}", 
       vendorType.listingUrl
     );
-
+  
     let result;
+    const listingUrl = encodeURI(vendorType.listingUrl);
+  
     try {
-      result = await this.firecrawlApp.extract([vendorType.listingUrl], { prompt });
+      console.log(`[VendorService] ${listingUrl}`);
+      result = await this.firecrawlApp.extract([listingUrl],  { prompt });
     } catch (err: any) {
       if (err.statusCode === 402) {
-        console.warn(`[VendorService] Firecrawl 402 on ${vendorType.listingUrl}, returning []`);
+        console.warn(`[VendorService] Firecrawl 402 on ${listingUrl}, returning []`);
         return [];
       }
       throw err;
     }
-
-    if (!result.success) {
-      console.warn(`[VendorService] success=false for ${vendorType.listingUrl}`, result.error);
+  
+    // Print the raw extract result once for debugging (shape sometimes varies)
+    try {
+      console.debug(`[VendorService] extract raw (truncated):`, JSON.stringify(result).slice(0, 500) + '...');
+    } catch {}
+  
+    if (!result || result.success === false) {
+      console.warn(`[VendorService] success=false for ${listingUrl}`, (result && (result as any).error) || "");
+    }
+  
+    // Normalize possible shapes returned by Firecrawl extract
+    const datum: any =
+      Array.isArray((result as any)?.data) ? (result as any).data[0] : (result as any)?.data;
+  
+    let urls: string[] = [];
+  
+    if (Array.isArray(datum?.urls)) {
+      urls = datum.urls as string[];
+    } else if (Array.isArray(datum)) {
+      // Some prompts/models return the array directly
+      urls = datum as string[];
+    } else if (typeof datum?.urls === "string") {
+      // Occasionally the field is a JSON string
+      try {
+        const parsed = JSON.parse(datum.urls);
+        if (Array.isArray(parsed)) urls = parsed as string[];
+      } catch {}
+    }
+  
+    // If empty, retry with a stricter prompt that forbids prose/fences
+    if (!urls || urls.length === 0) {
+      const retryPrompt = `
+        From the listing page at URL: ${listingUrl}
+        return ONLY JSON with the form: {"urls": ["https://...","https://..."]}
+        No markdown, no explanation, no extra keys, no trailing text. Ensure absolute URLs.
+      `.trim();
+  
+      try {
+        const retryRes = await this.firecrawlApp.extract([listingUrl], { prompt: retryPrompt });
+        const retryDatum: any =
+          Array.isArray((retryRes as any).data) ? (retryRes as any).data[0] : (retryRes as any).data;
+  
+        if (Array.isArray(retryDatum?.urls)) {
+          urls = retryDatum.urls as string[];
+        } else if (Array.isArray(retryDatum)) {
+          urls = retryDatum as string[];
+        } else if (typeof retryDatum?.urls === "string") {
+          try {
+            const parsed = JSON.parse(retryDatum.urls);
+            if (Array.isArray(parsed)) urls = parsed as string[];
+          } catch {}
+        }
+      } catch (e) {
+        console.warn(`[VendorService] retry extract failed for ${listingUrl}:`, e);
+      }
+    }
+  
+    // If still empty, FALLBACK: use crawl to discover profile URLs (helps especially for Venues listing)
+    if (!urls || urls.length === 0) {
+      try {
+        const crawl = await (this.firecrawlApp as any).crawl(listingUrl, {
+          // conservative crawl to grab paginated items
+          limit: 120,
+          maxDepth: 2,
+          allowBackwardLinks: false,
+          allowExternalLinks: false,
+        });
+  
+        // Crawl result commonly has shape { success, data: [{ url, markdown, html, ...}, ...] }
+        const crawledUrls: string[] = Array.isArray(crawl?.data)
+          ? (crawl.data as any[]).map((p: any) => p?.url).filter(Boolean)
+          : [];
+  
+        // Heuristics: keep only likely venue profile pages
+        // - same host as listing
+        // - path contains venue related slug or Hebrew "מקום" or looks like vendor profile (longer path)
+        const base = new URL(listingUrl);
+        const host = base.host;
+        const filtered = crawledUrls.filter((u) => {
+          try {
+            const x = new URL(u, listingUrl);
+            if (x.host !== host) return false;
+            const path = decodeURI(x.pathname.toLowerCase());
+            return (
+              path.includes("venue") ||
+              path.includes("מקום") ||
+              path.split("/").filter(Boolean).length >= 2 // likely a profile detail page
+            );
+          } catch {
+            return false;
+          }
+        });
+  
+        urls = filtered;
+      } catch (e) {
+        console.warn(`[VendorService] crawl fallback failed for ${listingUrl}:`, e);
+      }
+    }
+  
+    if (!urls || urls.length === 0) {
+      console.warn(`[VendorService] malformed/empty extract for ${listingUrl}`, datum);
       return [];
     }
-
-    const data0 = Array.isArray(result.data) ? result.data[0] : result.data as any;
-    if (!Array.isArray(data0.urls)) {
-      console.warn(`[VendorService] malformed response`, data0);
-      return [];
+  
+    // Normalize to absolute, deduplicate, and filter obvious junk
+    const norm = new Set<string>();
+    for (const u of urls) {
+      if (!u || typeof u !== "string") continue;
+      try {
+        const abs = new URL(u, listingUrl).toString();
+        if (!abs.startsWith("http")) continue;
+        // discard mailto/tel
+        if (abs.startsWith("mailto:") || abs.startsWith("tel:")) continue;
+        norm.add(abs);
+      } catch {
+        continue;
+      }
     }
-    return data0.urls;
+  
+    const finalUrls = Array.from(norm);
+    console.log(`[VendorService] findVendorUrls for ${vendorType.name}: ${finalUrls.length} urls`);
+    return finalUrls;
   }
 
   // Scrape a vendor's details and save to the database
@@ -190,7 +325,7 @@ export class VendorService {
   async processVendorResearch(userQuery: string, userId: string): Promise<VendorResearchResult> {
   try {
     const vendorType = this.analyzeVendorType(userQuery);
-
+    console.log(`[VendorService] Analyzed vendor type for query="${userQuery}":`, vendorType ? vendorType.name : "unknown");
     if (!vendorType) {
       return {
         vendorType: "unknown",
@@ -237,6 +372,7 @@ export class VendorService {
 
     // Fetch vendor URLs from listing
       const vendorUrls = await this.findVendorUrls(vendorType);
+      console.log(`[VendorService] Found ${vendorUrls.length} vendor URLs for type=${vendorType.name}`);
     if (vendorUrls.length === 0) {
       return {
         vendorType: vendorType.name,
@@ -266,7 +402,8 @@ export class VendorService {
     await userModel.findByIdAndUpdate(userId, {
         $addToSet: { myVendors: { $each: vendorIds } },
     });
-
+    console.log(`[VendorService] Added ${vendorIds.length} relevant vendors to user ${userId}'s myVendors.`);
+    console.log(`[VendorService] processVendorResearch completed for userId=${userId}, vendorType=${vendorType.name}, urlsFound=${vendorUrls.length}, scrapedVendors=${scrapedVendors.length}`);
     return {
       vendorType: vendorType.name,
       urlsFound: vendorUrls.length,
@@ -329,6 +466,7 @@ export class VendorService {
         const result = await model.generateContent(prompt);
         let aiContent = result.response.text().trim();
 
+
         if (!aiContent) continue;
 
         if (aiContent.startsWith("```json")) aiContent = aiContent.replace(/^```json/, "").trim();
@@ -358,9 +496,10 @@ export class VendorService {
         if (selectedNames.length === 0) continue;
 
         const matched = vendors.filter((v) => selectedNames.includes(v.name));
+        console.log(`[VendorService] Task "${task.task}" matched ${matched.length} vendors.`);
         results.push(...matched);
       } catch (err) {
-        console.error(`[VendorService] Gemini error in getRelevantVendorsByTDL:`, err);
+        console.error(`[VendorService] OpenAI error in getRelevantVendorsByTDL:`, err);
         continue; 
       }
     }

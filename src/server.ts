@@ -26,12 +26,15 @@ const app = express();
 const apiBase = "/api";
 
 // CORS options
-const corsOptions = {
-  origin: "*", // אם תרצה להגביל דומיינים תגדיר פה
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
+app.use(cors());
+app.use(
+  cors({
+    origin: process.env.DOMAIN_BASE,
+    credentials: true,
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+  })
+);
 // Swagger Documentation
 const options = {
   definition: {
@@ -41,8 +44,12 @@ const options = {
       version: "1.0.0",
       description: "REST server including authentication using JWT",
     },
-    servers: [{ url: "http://localhost:" + process.env.PORT + "/api" }, 
-    { url: process.env.DOMAIN_BASE}],
+    servers: [
+      { url: "http://localhost:" + process.env.PORT + "/api" }, 
+      { url: `http://10.10.248.153` },
+      { url: `https://10.10.248.153`},
+      { url: "https://193.106.55.153" }
+    ],
   },
   apis: ["./src/routes/*.ts"],
 };
@@ -52,19 +59,24 @@ app.use(`${apiBase}/api-docs`, swaggerUI.serve, swaggerUI.setup(specs));
 
 // Static files middleware - חייב להיות לפני ה-API routes
 app.use('/static', express.static(path.join(__dirname, './static')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads'), {
   setHeaders: (res) => {
     res.set('Access-Control-Allow-Origin', '*');
   }
 }));
+
+const frontPath = path.join(__dirname, '../../front');
+console.log(__dirname);
+console.log("Front path:", frontPath);
+app.use('/',express.static(frontPath));
+app.get('/ui/*', (req, res) => { res.sendFile(path.join(frontPath, 'index.html')); });
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // JSON Body parser
 app.use(express.json());
 
-// CORS middleware
-app.use(cors(corsOptions));
 
 // API routes
 app.use(`${apiBase}/guests`, guestRoutes);
@@ -80,7 +92,7 @@ app.use(`${apiBase}/menu`, menuRoutes);
 app.use(`${apiBase}/calendar`, calendarRoutes);
 
 // Root route
-app.get("/", (req: Request, res: Response) => {
+app.get("/details", (req: Request, res: Response) => {
   res.json({
     owners: [
       "Gavriel Matatov",
@@ -89,7 +101,7 @@ app.get("/", (req: Request, res: Response) => {
       "Gefen Kidmi",
       "Ziv Klien",
     ],
-    project: "WeddingZai Server",
+    project: "WeddingzAI Server",
   });
 });
 

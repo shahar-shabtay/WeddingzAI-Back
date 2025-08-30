@@ -121,7 +121,6 @@ class InvitationService {
   }
 
   async updateFinals(userId: string, finals: FinalsData) {
-    // המרת base64 ל-buffer
     const matches = finals.finalPng.match(/^data:image\/png;base64,(.+)$/);
     if (!matches) {
       throw new Error("Invalid PNG data");
@@ -129,8 +128,10 @@ class InvitationService {
     const base64Data = matches[1];
     const imgBuffer = Buffer.from(base64Data, "base64");
 
-    const userDir = path.join(__dirname, "../../uploads/invitation", userId);
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, {recursive: true});
+        // Use project root as the anchor so paths are consistent in dev/prod
+    const uploadsRoot = path.join(process.cwd(), "uploads");
+    const userDir = path.join(uploadsRoot, "invitation", userId);
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
     const pngFilename = `final.png`;
     const pngPath = path.join(userDir, pngFilename);
@@ -140,14 +141,15 @@ class InvitationService {
     const canvasPath = path.join(userDir, canvasFilename);
     fs.writeFileSync(canvasPath, JSON.stringify(finals.finalCanvasJson, null, 2));
 
-    const relativePngPath = path.relative(path.join(__dirname, "../uploads"), pngPath).replace(/\\/g, "/");
-    const relativeCanvasPath = path.relative(path.join(__dirname, "../uploads"), canvasPath).replace(/\\/g, "/");
+    // Public paths to be served by: app.use("/uploads", express.static(path.join(process.cwd(), "uploads")))
+    const publicPngPath = `/uploads/invitation/${userId}/${pngFilename}`;
+    const publicCanvasPath = `/uploads/invitation/${userId}/${canvasFilename}`;
 
     const invitation = await Invitation.findOneAndUpdate(
       { userId },
       {
-        finalPng: relativePngPath,
-        finalCanvasJson: relativeCanvasPath,
+        finalPng: publicPngPath,
+        finalCanvasJson: publicCanvasPath,
       },
       { new: true, upsert: true }
     );

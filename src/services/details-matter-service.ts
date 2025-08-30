@@ -9,8 +9,8 @@ export interface SongSuggestion {
 }
 
 const api = new OpenAI({
-  apiKey: process.env.AIMLAPI_KEY,
-  baseURL: process.env.AIMLAPI_URL,
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_API_URL,
 });
 
 const systemPrompt = `You are a wedding music expert. Given a user's wedding style and preferences, suggest 3 songs that would be perfect for their wedding. 
@@ -45,7 +45,7 @@ export async function suggestSongsFromAI(prompt: string): Promise<SongSuggestion
   } 
   try {
     const completion = await api.chat.completions.create({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4.1",
         messages: [
           {
             role: "system",

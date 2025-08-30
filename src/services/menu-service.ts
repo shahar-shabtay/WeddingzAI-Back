@@ -139,8 +139,9 @@ class MenuService {
     const base64Data = matches[1];
     const imgBuffer = Buffer.from(base64Data, "base64");
 
-    const userDir = path.join(__dirname, "../../uploads/menu", userId);
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, {recursive: true});
+    const uploadsRoot = path.join(process.cwd(), "uploads");
+    const userDir = path.join(uploadsRoot, "menu", userId);
+    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
 
     const pngFilename = `final.png`;
     const pngPath = path.join(userDir, pngFilename);
@@ -150,14 +151,15 @@ class MenuService {
     const canvasPath = path.join(userDir, canvasFilename);
     fs.writeFileSync(canvasPath, JSON.stringify(finals.finalCanvasJson, null, 2));
 
-    const relativePngPath = path.relative(path.join(__dirname, "../uploads"), pngPath).replace(/\\/g, "/");
-    const relativeCanvasPath = path.relative(path.join(__dirname, "../uploads"), canvasPath).replace(/\\/g, "/");
+    const publicPngPath = `/uploads/menu/${userId}/${pngFilename}`;
+    const publicCanvasPath = `/uploads/menu/${userId}/${canvasFilename}`;
 
     const menu = await Menu.findOneAndUpdate(
       { userId },
       {
-        finalPng: relativePngPath,
-        finalCanvasJson: relativeCanvasPath,
+        
+        finalPng: publicPngPath,
+        finalCanvasJson: publicCanvasPath,
       },
       { new: true, upsert: true }
     );
