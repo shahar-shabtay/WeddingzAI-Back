@@ -88,10 +88,100 @@ export class VendorService {
       "{{listingUrl}}", 
       vendorType.listingUrl
     );
-  
+
     let result;
     const listingUrl = encodeURI(vendorType.listingUrl);
-  
+
+    // --- Venues: collect URLs only from the main content container ---
+    if (vendorType.name.toLowerCase() === "venues") {
+      try {
+        const resp = await (await import("axios")).default.get(listingUrl, { responseType: "arraybuffer" });
+        const html = typeof resp.data === "string" ? resp.data : Buffer.from(resp.data).toString("utf8");
+        const cheerio = await import("cheerio");
+        const $ = cheerio.load(html);
+
+        // candidates only from k2 main list views (avoid header/breadcrumbs/menus)
+        const candidates: string[] = [];
+        $('#k2Container .itemListView a[href], #k2Container .itemList a[href]').each((_i, el) => {
+          const raw = $(el).attr('href') || '';
+          if (!raw || raw.startsWith('#') || raw.startsWith('mailto:') || raw.startsWith('tel:')) return;
+          try { candidates.push(new URL(raw, listingUrl).toString()); } catch {}
+        });
+
+        const base = new URL(listingUrl);
+        const host = base.host;
+
+        // identify category pages under /מקום-לאירוע/*.html (not the root)
+        const categoryUrls = Array.from(new Set(
+          candidates.filter(u => {
+            try {
+              const x = new URL(u);
+              const p = decodeURI(x.pathname);
+              return (
+                x.host === host &&
+                p.startsWith("/מקום-לאירוע/") &&
+                p.endsWith(".html") &&
+                p !== decodeURI(base.pathname)
+              );
+            } catch { return false; }
+          })
+        ));
+
+        // main page may already include direct profiles
+        const profilesFromMain = Array.from(new Set(
+          candidates.filter(u => {
+            try {
+              const x = new URL(u);
+              const p = decodeURI(x.pathname.toLowerCase());
+              const depth = p.split('/').filter(Boolean).length;
+              return (
+                x.host === host &&
+                !p.startsWith('/מקום-לאירוע/') &&
+                p.endsWith('.html') &&
+                depth <= 1
+              );
+            } catch { return false; }
+          })
+        ));
+
+        const profileSet = new Set<string>(profilesFromMain);
+
+        // visit each category and collect only within k2 main list
+        for (const catUrl of categoryUrls) {
+          try {
+            const r = await (await import("axios")).default.get(catUrl, { responseType: "arraybuffer" });
+            const htmlCat = typeof r.data === 'string' ? r.data : Buffer.from(r.data).toString('utf8');
+            const $cat = (await import('cheerio')).load(htmlCat);
+
+            $cat('#k2Container .itemListView a[href], #k2Container .itemList a[href]').each((_i, el) => {
+              const raw = $cat(el).attr('href') || '';
+              if (!raw || raw.startsWith('#') || raw.startsWith('mailto:') || raw.startsWith('tel:')) return;
+              try {
+                const abs = new URL(raw, catUrl);
+                const p = decodeURI(abs.pathname.toLowerCase());
+                const depth = p.split('/').filter(Boolean).length;
+                const looksLikeProfile =
+                  abs.host === host &&
+                  !p.startsWith('/מקום-לאירוע/') &&
+                  p.endsWith('.html') &&
+                  depth <= 1; // /name.html
+                if (looksLikeProfile) profileSet.add(abs.toString());
+              } catch {}
+            });
+          } catch (e) {
+            console.warn(`[VendorService] Venues category fetch failed ${catUrl}:`, e);
+          }
+        }
+
+        const finalUrls = Array.from(profileSet);
+        console.log(`[VendorService] findVendorUrls (Venues) total: ${finalUrls.length}`);
+        return finalUrls;
+      } catch (e) {
+        console.warn(`[VendorService] Venues main scrape failed for ${listingUrl}:`, e);
+        return [];
+      }
+    }
+
     try {
       console.log(`[VendorService] ${listingUrl}`);
       result = await this.firecrawlApp.extract([listingUrl],  { prompt });
@@ -102,22 +192,22 @@ export class VendorService {
       }
       throw err;
     }
-  
+
     // Print the raw extract result once for debugging (shape sometimes varies)
     try {
       console.debug(`[VendorService] extract raw (truncated):`, JSON.stringify(result).slice(0, 500) + '...');
     } catch {}
-  
+
     if (!result || result.success === false) {
       console.warn(`[VendorService] success=false for ${listingUrl}`, (result && (result as any).error) || "");
     }
-  
+
     // Normalize possible shapes returned by Firecrawl extract
     const datum: any =
       Array.isArray((result as any)?.data) ? (result as any).data[0] : (result as any)?.data;
-  
+
     let urls: string[] = [];
-  
+
     if (Array.isArray(datum?.urls)) {
       urls = datum.urls as string[];
     } else if (Array.isArray(datum)) {
@@ -130,7 +220,7 @@ export class VendorService {
         if (Array.isArray(parsed)) urls = parsed as string[];
       } catch {}
     }
-  
+
     // If empty, retry with a stricter prompt that forbids prose/fences
     if (!urls || urls.length === 0) {
       const retryPrompt = `
@@ -138,12 +228,12 @@ export class VendorService {
         return ONLY JSON with the form: {"urls": ["https://...","https://..."]}
         No markdown, no explanation, no extra keys, no trailing text. Ensure absolute URLs.
       `.trim();
-  
+
       try {
         const retryRes = await this.firecrawlApp.extract([listingUrl], { prompt: retryPrompt });
         const retryDatum: any =
           Array.isArray((retryRes as any).data) ? (retryRes as any).data[0] : (retryRes as any).data;
-  
+
         if (Array.isArray(retryDatum?.urls)) {
           urls = retryDatum.urls as string[];
         } else if (Array.isArray(retryDatum)) {
@@ -158,54 +248,12 @@ export class VendorService {
         console.warn(`[VendorService] retry extract failed for ${listingUrl}:`, e);
       }
     }
-  
-    // If still empty, FALLBACK: use crawl to discover profile URLs (helps especially for Venues listing)
-    if (!urls || urls.length === 0) {
-      try {
-        const crawl = await (this.firecrawlApp as any).crawl(listingUrl, {
-          // conservative crawl to grab paginated items
-          limit: 120,
-          maxDepth: 2,
-          allowBackwardLinks: false,
-          allowExternalLinks: false,
-        });
-  
-        // Crawl result commonly has shape { success, data: [{ url, markdown, html, ...}, ...] }
-        const crawledUrls: string[] = Array.isArray(crawl?.data)
-          ? (crawl.data as any[]).map((p: any) => p?.url).filter(Boolean)
-          : [];
-  
-        // Heuristics: keep only likely venue profile pages
-        // - same host as listing
-        // - path contains venue related slug or Hebrew "מקום" or looks like vendor profile (longer path)
-        const base = new URL(listingUrl);
-        const host = base.host;
-        const filtered = crawledUrls.filter((u) => {
-          try {
-            const x = new URL(u, listingUrl);
-            if (x.host !== host) return false;
-            const path = decodeURI(x.pathname.toLowerCase());
-            return (
-              path.includes("venue") ||
-              path.includes("מקום") ||
-              path.split("/").filter(Boolean).length >= 2 // likely a profile detail page
-            );
-          } catch {
-            return false;
-          }
-        });
-  
-        urls = filtered;
-      } catch (e) {
-        console.warn(`[VendorService] crawl fallback failed for ${listingUrl}:`, e);
-      }
-    }
-  
+
     if (!urls || urls.length === 0) {
       console.warn(`[VendorService] malformed/empty extract for ${listingUrl}`, datum);
       return [];
     }
-  
+
     // Normalize to absolute, deduplicate, and filter obvious junk
     const norm = new Set<string>();
     for (const u of urls) {
@@ -220,7 +268,7 @@ export class VendorService {
         continue;
       }
     }
-  
+
     const finalUrls = Array.from(norm);
     console.log(`[VendorService] findVendorUrls for ${vendorType.name}: ${finalUrls.length} urls`);
     return finalUrls;

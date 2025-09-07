@@ -148,6 +148,7 @@ export const VENDOR_TYPES: VendorType[] = [
     listingUrl: "https://urbanbridesmag.co.il/מקום-לאירוע.html",
     extractPrompt: `
         Given the listing page at URL: {{listingUrl}},
+        Search under the tag with calss name ListItems
         scan the HTML for anchor tags <a> that link to INDIVIDUAL venue profile pages.
         Rules:
         - Collect only anchors with hrefs that point to venue PROFILE pages (not category, not listing, not pagination).
