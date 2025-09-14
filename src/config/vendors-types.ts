@@ -116,7 +116,7 @@ export const VENDOR_TYPES: VendorType[] = [
         profileImage?: string;
         about?:        string;
         price_range?:  string;
-        max_companions?:     string;
+        max_companions?:  string;
         price_include?:         string;
         eventImages?:  string[];
         faqs?:         { question: string; answer: string }[];

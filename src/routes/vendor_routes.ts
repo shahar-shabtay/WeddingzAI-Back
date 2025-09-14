@@ -408,6 +408,48 @@ router.get("/search",authMiddleware, vendorController.search.bind(vendorControll
  */
 router.get("/:id",authMiddleware, vendorController.getById.bind(vendorController));
 
+/**
+ * @swagger
+ * /vendors/can-send-to-ai:
+ *   post:
+ *     summary: Check if a task can be sent to AI
+ *     tags: [Vendors]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - task
+ *             properties:
+ *               task:
+ *                 type: string
+ *                 description: The task text to check
+ *     responses:
+ *       200:
+ *         description: AI capability check result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 canSend:
+ *                   type: boolean
+ *                 vendorType:
+ *                   type: string
+ *                   nullable: true
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/can-send-to-ai", authMiddleware, vendorController.canSendToAI);
+
 router.post("/research/background", authMiddleware, vendorController.startBackgroundResearch); 
 
 //PATCH

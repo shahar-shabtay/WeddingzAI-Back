@@ -266,40 +266,62 @@ export async function updateWeddingDateWithAI(
   const newWeddingDate = new Date(newWeddingDateStr);
   if (isNaN(newWeddingDate.getTime())) throw new Error("Invalid wedding date format");
 
-  const getDefaultDueDate = (sectionName: string, weddingDate: Date): string => {
-    const date = new Date(weddingDate);
+  const getSectionDateRange = (sectionName: string, weddingDate: Date): { start: Date; end: Date } => {
+    const start = new Date(weddingDate);
+    const end = new Date(weddingDate);
+    
     switch (sectionName) {
       case "12 Months Before":
-        date.setMonth(date.getMonth() - 12);
+        start.setMonth(start.getMonth() - 12);
+        end.setMonth(end.getMonth() - 9);
         break;
       case "9–12 Months Before":
-        date.setMonth(date.getMonth() - 10);
+        start.setMonth(start.getMonth() - 9);
+        end.setMonth(end.getMonth() - 6);
         break;
       case "6–9 Months Before":
-        date.setMonth(date.getMonth() - 8);
+        start.setMonth(start.getMonth() - 6);
+        end.setMonth(end.getMonth() - 3);
         break;
       case "3–6 Months Before":
-        date.setMonth(date.getMonth() - 4);
+        start.setMonth(start.getMonth() - 3);
+        end.setMonth(end.getMonth() - 1);
         break;
       case "1–3 Months Before":
-        date.setMonth(date.getMonth() - 2);
+        start.setMonth(start.getMonth() - 1);
+        end.setDate(end.getDate() - 21);
         break;
       case "1–4 Weeks Before":
-        date.setDate(date.getDate() - 21);
+        start.setDate(start.getDate() - 21);
+        end.setDate(end.getDate() - 1);
         break;
       case "Wedding Day":
+        start.setTime(weddingDate.getTime());
+        end.setTime(weddingDate.getTime());
         break;
       default:
+        start.setMonth(start.getMonth() - 12);
+        end.setTime(weddingDate.getTime());
         break;
     }
-    return date.toISOString().slice(0, 10);
+    
+    return { start, end };
   };
 
   for (const section of doc.tdl.sections) {
-    for (const todo of section.todos) {
-      todo.dueDate = getDefaultDueDate(section.sectionName, newWeddingDate);
+    const { start, end } = getSectionDateRange(section.sectionName, newWeddingDate);
+    const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
+    
+    section.todos.forEach((todo, index) => {
+      // Spread tasks evenly across the section's date range
+      const daysFromStart = Math.floor((totalDays * index) / Math.max(1, section.todos.length - 1));
+      const taskDate = new Date(start);
+      taskDate.setDate(taskDate.getDate() + daysFromStart);
+      
+      todo.dueDate = taskDate.toISOString().slice(0, 10);
       todo.aiSent = false;
-    }
+    });
+    
     section.todos.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
   }
 
