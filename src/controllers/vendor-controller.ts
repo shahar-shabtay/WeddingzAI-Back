@@ -11,6 +11,30 @@ export class VendorController extends BaseController<IVendor> {
     super(VendorModel);
   }
 
+  // Check if a task can be sent to AI
+  async canSendToAI(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { task } = req.body;
+
+      if (!task || typeof task !== "string") {
+        res.status(400).json({ success: false, error: "Task is required and must be a string" });
+        return;
+      }
+
+      const vendorType = vendorService.analyzeVendorType(task);
+      const canSend = vendorType !== null;
+
+      res.status(200).json({
+        success: true,
+        canSend,
+        vendorType: vendorType?.name || null
+      });
+    } catch (err: any) {
+      console.error("[VendorController] Error checking AI capability:", err);
+      res.status(500).json({ success: false, error: err.message || "Unexpected error" });
+    }
+  }
+
   // Add a vendor research task to queue
   async startBackgroundResearch(req: AuthRequest, res: Response): Promise<void> {
     try {
